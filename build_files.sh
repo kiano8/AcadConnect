@@ -1,6 +1,9 @@
 #!/bin/bash
-# Install Python dependencies
-pip install -r requirements.txt
+set -e
 
-# Collect static files
-python manage.py collectstatic --noinput --clear
+echo "Installing dependencies..."
+python3 -m pip install -r requirements.txt
+
+echo "Collecting static files..."
+export DJANGO_SETTINGS_MODULE=config.settings
+python3 manage.py collectstatic --noinput
