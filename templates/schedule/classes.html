@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Class Schedule{% endblock %}
+{% block page_title %}Class Schedule{% endblock %}
+
+{% block content %}
+<div class="flex-between" style="margin-bottom:22px;">
+  <div>
+    <h2 class="page-title"><i class="ph ph-chalkboard"></i> Class Schedule</h2>
+    <p class="page-subtitle">Manage your weekly recurring classes.</p>
+  </div>
+  <a href="{% url 'schedule:calendar' %}" class="btn btn-secondary btn-sm">
+    <i class="ph ph-arrow-left"></i> Calendar
+  </a>
+</div>
+
+<div class="grid grid-2 gap-20" style="align-items:start;">
+
+  <!-- ── Add Class Form ── -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon icon-blue">
+        <i class="ph ph-chalkboard-teacher"></i>
+      </div>
+      <div>
+        <h3 class="form-card-title">Add a Class</h3>
+        <p class="form-card-sub">Register a recurring class in your weekly schedule</p>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error"><i class="ph ph-warning-circle"></i> {{ form.non_field_errors|join:", " }}</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- Course Info -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-book-open"></i> Course Info</div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.course_name.id_for_label }}">
+            Course Name <span class="required-dot">*</span>
+          </label>
+          {{ form.course_name }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.course_name.help_text }}</div>
+          {% if form.course_name.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.course_name.errors|join:', ' }}</div>
+          {% endif %}
+        </div>
+
+        <div class="grid grid-2" style="gap:14px;">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.professor.id_for_label }}">Professor</label>
+            {{ form.professor }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.professor.help_text }}</div>
+            {% if form.professor.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.professor.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.semester.id_for_label }}">Semester</label>
+            {{ form.semester }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.semester.help_text }}</div>
+            {% if form.semester.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.semester.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-calendar-blank"></i> Schedule</div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.day_of_week.id_for_label }}">
+            Day of Week <span class="required-dot">*</span>
+          </label>
+          {{ form.day_of_week }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.day_of_week.help_text }}</div>
+          {% if form.day_of_week.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.day_of_week.errors|join:', ' }}</div>
+          {% endif %}
+        </div>
+
+        <div class="grid grid-2" style="gap:14px;">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.start_time.id_for_label }}">
+              Start Time <span class="required-dot">*</span>
+            </label>
+            {{ form.start_time }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.start_time.help_text }}</div>
+            {% if form.start_time.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.start_time.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.end_time.id_for_label }}">
+              End Time <span class="required-dot">*</span>
+            </label>
+            {{ form.end_time }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.end_time.help_text }}</div>
+            {% if form.end_time.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.end_time.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.room.id_for_label }}">Room / Location</label>
+          {{ form.room }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.room.help_text }}</div>
+          {% if form.room.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.room.errors|join:', ' }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-palette"></i> Appearance</div>
+        <div class="form-group" style="display:flex;align-items:center;gap:16px;">
+          <div style="flex:1;">
+            <label class="form-label" for="{{ form.color.id_for_label }}">Calendar Colour</label>
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.color.help_text }}</div>
+          </div>
+          {{ form.color }}
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="add-class-btn">
+          <i class="ph ph-plus-circle"></i> Add Class
+        </button>
+        <a href="{% url 'schedule:calendar' %}" class="btn btn-secondary">
+          <i class="ph ph-x"></i> Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── My Classes List ── -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-list-dashes"></i> My Classes</span>
+      <span class="badge badge-teal">{{ schedules|length }}</span>
+    </div>
+
+    {% for cls in schedules %}
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-color);">
+      <div style="margin-top:5px;width:10px;height:10px;border-radius:50%;background:{{ cls.color|default:'var(--accent-teal)' }};flex-shrink:0;box-shadow:0 0 0 4px {{ cls.color|default:'rgba(42,157,143' }},0.12);"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ cls.course_name }}</div>
+        <div style="font-size:0.73rem;color:var(--text-muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <span><i class="ph ph-calendar-blank"></i> {{ cls.get_day_of_week_display }}</span>
+          <span><i class="ph ph-clock"></i> {{ cls.start_time|time:"g:i A" }}–{{ cls.end_time|time:"g:i A" }}</span>
+          {% if cls.room %}<span><i class="ph ph-map-pin"></i> {{ cls.room }}</span>{% endif %}
+          {% if cls.professor %}<span><i class="ph ph-user"></i> {{ cls.professor }}</span>{% endif %}
+        </div>
+        {% if cls.semester %}
+        <div style="margin-top:5px;"><span class="badge badge-gray">{{ cls.semester }}</span></div>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div style="padding:48px 20px;text-align:center;">
+      <i class="ph ph-chalkboard" style="font-size:3rem;color:var(--accent-teal);display:block;margin-bottom:12px;opacity:.45;"></i>
+      <h4 style="font-size:0.95rem;margin-bottom:6px;">No classes yet</h4>
+      <p class="text-muted" style="font-size:0.84rem;">Fill in the form on the left to add your first class.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

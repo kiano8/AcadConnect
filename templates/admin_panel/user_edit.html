@@ -1,0 +1,268 @@
+{% extends 'admin_panel/admin_base.html' %}
+{% block title %}Edit {{ target_user.username }}{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+
+{% block content %}
+
+<div class="flex-between mb-22">
+  <div>
+    <h2 class="page-title"><i class="ph ph-pencil-simple"></i> Edit User</h2>
+    <p class="page-subtitle">Editing account for <strong>{{ target_user.username }}</strong></p>
+  </div>
+  <a href="{% url 'admin_panel:user_list' %}" class="btn btn-secondary">
+    <i class="ph ph-arrow-left"></i> Back to Users
+  </a>
+</div>
+
+<div class="grid grid-2 gap-20" style="align-items:start;">
+
+  <!-- Edit form -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-user-gear"></i> Account Details</span>
+    </div>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="grid grid-2 gap-14">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<div class="form-error">{{ form.first_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<div class="form-error">{{ form.last_name.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}<div class="form-error">{{ form.username.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        {{ form.email }}
+        {% if form.email.errors %}<div class="form-error">{{ form.email.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="grid grid-2 gap-14">
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          {{ form.role }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Semester</label>
+          {{ form.semester }}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bio</label>
+        {{ form.bio }}
+      </div>
+      <div class="grid grid-2 gap-14">
+        <div class="form-group">
+          <label class="form-label">GPA Threshold</label>
+          {{ form.gpa_threshold }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stress Level (1–10)</label>
+          {{ form.stress_level }}
+        </div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <div class="toggle-item">
+          {{ form.is_active }}
+          <label for="{{ form.is_active.id_for_label }}" class="toggle-label">
+            <i class="ph ph-check-circle" style="color:var(--accent-green);"></i>
+            Account Active
+          </label>
+        </div>
+        <div class="toggle-item">
+          {{ form.is_email_verified }}
+          <label for="{{ form.is_email_verified.id_for_label }}" class="toggle-label">
+            <i class="ph ph-envelope-simple-open" style="color:var(--accent-teal);"></i>
+            Email Verified
+          </label>
+        </div>
+      </div>
+
+      <div class="flex gap-10 mt-16">
+        <button type="submit" class="btn btn-primary" id="save-user-btn">
+          <i class="ph ph-floppy-disk"></i> Save Changes
+        </button>
+        <a href="{% url 'admin_panel:user_list' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Right column: info + danger zone -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- User info card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-info"></i> Account Info</span>
+      </div>
+      <div class="info-rows">
+        <div class="info-row">
+          <span class="info-key">User ID</span>
+          <span class="info-val">#{{ target_user.pk }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Date Joined</span>
+          <span class="info-val">{{ target_user.date_joined|date:"M j, Y · g:i A" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Last Login</span>
+          <span class="info-val">
+            {% if target_user.last_login %}
+            {{ target_user.last_login|date:"M j, Y · g:i A" }}
+            {% else %}Never{% endif %}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Email Verified</span>
+          <span class="info-val">
+            {% if target_user.is_email_verified %}
+            <span class="badge badge-green">Yes</span>
+            {% else %}
+            <span class="badge badge-gold">No</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Status</span>
+          <span class="info-val">
+            {% if target_user.is_active %}
+            <span class="badge badge-green">Active</span>
+            {% else %}
+            <span class="badge badge-coral">Suspended</span>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-lightning"></i> Quick Actions</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+
+        <!-- Approve -->
+        {% if not target_user.is_email_verified %}
+        <form method="post" action="{% url 'admin_panel:user_approve' target_user.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary" style="width:100%;justify-content:flex-start;">
+            <i class="ph ph-check-circle" style="color:var(--accent-green);"></i> Approve & Verify Email
+          </button>
+        </form>
+        {% endif %}
+
+        <!-- Reset password -->
+        <form method="post" action="{% url 'admin_panel:user_reset_password' target_user.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary" style="width:100%;justify-content:flex-start;"
+            onclick="return confirm('Send password reset to {{ target_user.email }}?')">
+            <i class="ph ph-lock-key" style="color:var(--accent-teal);"></i> Send Password Reset Email
+          </button>
+        </form>
+
+        <!-- Suspend / Unsuspend -->
+        {% if target_user != request.user %}
+        <form method="post" action="{% url 'admin_panel:user_suspend' target_user.pk %}">
+          {% csrf_token %}
+          <button type="submit"
+            class="btn btn-secondary" style="width:100%;justify-content:flex-start;"
+            onclick="return confirm('{% if target_user.is_active %}Suspend{% else %}Unsuspend{% endif %} this account?')">
+            <i class="ph ph-{% if target_user.is_active %}prohibit{% else %}arrow-counter-clockwise{% endif %}"
+              data-suspend-state="{% if target_user.is_active %}active{% else %}suspended{% endif %}"></i>
+            {% if target_user.is_active %}Suspend Account{% else %}Unsuspend Account{% endif %}
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Danger zone -->
+    {% if target_user != request.user %}
+    <div class="card danger-zone">
+      <div class="card-header">
+        <span class="card-title" style="color:var(--accent-coral);"><i class="ph ph-warning-octagon"></i> Danger Zone</span>
+      </div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
+        Permanently delete this account. This action cannot be undone.
+      </p>
+      <form method="post" action="{% url 'admin_panel:user_delete' target_user.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" style="width:100%;justify-content:flex-start;"
+          onclick="return confirm('PERMANENTLY delete {{ target_user.username }}? This cannot be undone.')">
+          <i class="ph ph-trash"></i> Delete Account Permanently
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<style>
+  .mb-22 { margin-bottom: 22px; }
+  .gap-14 { gap: 14px; }
+  .gap-10 { gap: 10px; }
+  .mt-16 { margin-top: 16px; }
+
+  .toggle-row {
+    display: flex;
+    gap: 20px;
+    padding: 14px 0;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+  }
+  .toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toggle-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .info-rows { display: flex; flex-direction: column; }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.875rem;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--text-muted); font-weight: 500; }
+  .info-val { font-weight: 600; color: var(--text-primary); }
+
+  .danger-zone {
+    border-color: rgba(255, 100, 80, 0.25);
+    background: rgba(255, 100, 80, 0.04);
+  }
+
+  /* Suspend icon color via data attribute */
+  i[data-suspend-state="active"]   { color: var(--accent-coral); }
+  i[data-suspend-state="suspended"] { color: var(--accent-gold); }
+
+  .form-error {
+    color: var(--accent-coral);
+    font-size: 0.78rem;
+    margin-top: 4px;
+  }
+</style>
+{% endblock %}

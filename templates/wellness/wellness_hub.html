@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% block title %}Wellness Hub{% endblock %}
+{% block page_title %}Wellness &amp; Motivation{% endblock %}
+
+{% block content %}
+<div class="grid grid-2 gap-20" style="align-items:start;">
+
+  <!-- ── Left: Quote + Tip + Stress Logger ── -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    {% if quote %}
+    <div class="quote-card">
+      <p class="quote-text">{{ quote.text }}</p>
+      {% if quote.author %}<p class="quote-author">— {{ quote.author }}</p>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-robot"></i> Personalised Tip</span>
+      </div>
+      <p style="font-size:0.9rem;line-height:1.7;color:var(--text-secondary);">{{ tip }}</p>
+    </div>
+
+    <!-- ── Stress Logger ── -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="form-card-icon icon-coral">
+          <i class="ph ph-thermometer"></i>
+        </div>
+        <div>
+          <h3 class="form-card-title">Today's Stress Level</h3>
+          <p class="form-card-sub">Log how you're feeling — self-awareness is step one</p>
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'wellness:log_stress' %}" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">
+            How stressed are you right now?
+            <span id="stress-display" style="font-weight:800;color:var(--accent-teal);font-size:1.05rem;margin-left:6px;">{{ stress_log.stress_level }}</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">/10</span>
+          </label>
+          <input type="range" name="stress_level" id="stress-range" min="1" max="10"
+                 value="{{ stress_log.stress_level }}" style="margin:8px 0 4px;">
+          <div class="form-hint" style="justify-content:space-between;">
+            <span><i class="ph ph-smiley"></i> 1 = Calm &amp; relaxed</span>
+            <span>10 = Overwhelmed <i class="ph ph-smiley-nervous"></i></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_note">Note <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+          <textarea name="note" id="id_note" class="form-control" rows="2"
+                    placeholder="What's on your mind? Writing it out can help…">{{ stress_log.note }}</textarea>
+          <div class="form-hint"><i class="ph ph-info"></i> Journaling even briefly reduces stress.</div>
+        </div>
+
+        <div class="form-actions" style="margin-top:14px;padding-top:14px;">
+          <button type="submit" class="btn btn-primary" id="log-stress-btn">
+            <i class="ph ph-heart"></i> Log Stress
+          </button>
+        </div>
+      </form>
+    </div>
+
+    {% if stress_history %}
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-trend-up"></i> Stress History (14 days)</span>
+      </div>
+      <canvas id="stressChart" height="120"></canvas>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Right: Wellness Reminders + Checklist ── -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- Reminder Form -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="form-card-icon icon-mint">
+          <i class="ph ph-alarm"></i>
+        </div>
+        <div>
+          <h3 class="form-card-title">Wellness Reminders</h3>
+          <p class="form-card-sub">Set hydration, break, sleep, and mindfulness reminders</p>
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'wellness:add_reminder' %}" novalidate>
+        {% csrf_token %}
+
+        <div class="form-section">
+          <div class="form-section-label"><i class="ph ph-bell"></i> Reminder Details</div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ reminder_form.reminder_type.id_for_label }}">
+              Reminder Type <span class="required-dot">*</span>
+            </label>
+            {{ reminder_form.reminder_type }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ reminder_form.reminder_type.help_text }}</div>
+            {% if reminder_form.reminder_type.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ reminder_form.reminder_type.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ reminder_form.time.id_for_label }}">
+              Reminder Time <span class="required-dot">*</span>
+            </label>
+            {{ reminder_form.time }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ reminder_form.time.help_text }}</div>
+            {% if reminder_form.time.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ reminder_form.time.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ reminder_form.message.id_for_label }}">Personal Message</label>
+            {{ reminder_form.message }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ reminder_form.message.help_text }}</div>
+            {% if reminder_form.message.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ reminder_form.message.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="add-reminder-btn">
+            <i class="ph ph-plus-circle"></i> Add Reminder
+          </button>
+        </div>
+      </form>
+
+      {% if reminders %}
+      <div style="margin-top:20px;border-top:1px solid var(--border-color);padding-top:16px;">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:10px;">
+          <i class="ph ph-check-circle"></i> Active Reminders
+        </div>
+        {% for r in reminders %}
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-color);">
+          <div style="width:34px;height:34px;border-radius:50%;background:rgba(42,157,143,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="ph ph-{% if r.reminder_type == 'hydration' %}drop{% elif r.reminder_type == 'break' %}coffee{% elif r.reminder_type == 'meditation' %}peace{% elif r.reminder_type == 'exercise' %}person-simple-run{% else %}moon{% endif %}"
+               style="font-size:1rem;color:var(--accent-teal);"></i>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:0.875rem;">{{ r.get_reminder_type_display }}</div>
+            <div style="font-size:0.73rem;color:var(--text-muted);">
+              <i class="ph ph-clock"></i> {{ r.time|time:"g:i A" }}{% if r.message %} — {{ r.message }}{% endif %}
+            </div>
+          </div>
+          <a href="{% url 'wellness:toggle_reminder' r.pk %}"
+             class="btn btn-sm {% if r.active %}btn-secondary{% else %}btn-ghost{% endif %} btn-icon"
+             title="{% if r.active %}Disable{% else %}Enable{% endif %}">
+            <i class="ph ph-{% if r.active %}check{% else %}circle{% endif %}"></i>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted" style="font-size:0.875rem;margin-top:14px;text-align:center;padding:10px 0;">
+        <i class="ph ph-bell-slash" style="font-size:1.2rem;display:block;margin-bottom:6px;opacity:.5;"></i>
+        No reminders set yet. Add one above!
+      </p>
+      {% endif %}
+    </div>
+
+    <!-- Daily Wellness Checklist -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-leaf"></i> Daily Wellness Checklist</span>
+      </div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">
+        <li class="wellness-item wellness-item--water">
+          <i class="ph ph-drop" style="color:var(--accent-teal);flex-shrink:0;"></i>
+          <span>Drink 8 glasses of water today</span>
+        </li>
+        <li class="wellness-item wellness-item--walk">
+          <i class="ph ph-person-simple-walk" style="color:var(--accent-green);flex-shrink:0;"></i>
+          <span>Take a 10-minute walk between classes</span>
+        </li>
+        <li class="wellness-item wellness-item--sleep">
+          <i class="ph ph-moon" style="color:var(--accent-mint);flex-shrink:0;"></i>
+          <span>Get at least 7–8 hours of sleep</span>
+        </li>
+        <li class="wellness-item wellness-item--meditate">
+          <i class="ph ph-peace" style="color:var(--accent-gold);flex-shrink:0;"></i>
+          <span>5 minutes of mindful breathing or meditation</span>
+        </li>
+        <li class="wellness-item wellness-item--screen">
+          <i class="ph ph-device-mobile-slash" style="color:var(--accent-coral);flex-shrink:0;"></i>
+          <span>No screens 30 mins before bed</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.wellness-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.875rem;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+.wellness-item--water   { background: rgba(42,157,143,0.08); }
+.wellness-item--walk    { background: rgba(82,183,136,0.08); }
+.wellness-item--sleep   { background: rgba(168,218,220,0.1); }
+.wellness-item--meditate{ background: rgba(233,196,106,0.1); }
+.wellness-item--screen  { background: rgba(224,122,95,0.08); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{% if stress_history %}
+<script>
+  const stressLabels = JSON.parse('{{ stress_history_labels|safe }}');
+  const stressData   = JSON.parse('{{ stress_history_data|safe }}');
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Live stress display
+    const range   = document.getElementById('stress-range');
+    const display = document.getElementById('stress-display');
+    if (range && display) {
+      range.addEventListener('input', () => { display.textContent = range.value; });
+    }
+
+    const ctx = document.getElementById('stressChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: stressLabels,
+        datasets: [{
+          label: 'Stress Level',
+          data: stressData,
+          borderColor: '#E07A5F',
+          backgroundColor: 'rgba(224,122,95,0.08)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#E07A5F',
+          pointRadius: 4,
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { min: 1, max: 10, ticks: { stepSize: 2 }, grid: { color: 'rgba(168,218,220,0.08)' } },
+          x: { grid: { display: false } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  });
+</script>
+{% else %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const range   = document.getElementById('stress-range');
+    const display = document.getElementById('stress-display');
+    if (range && display) {
+      range.addEventListener('input', () => { display.textContent = range.value; });
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

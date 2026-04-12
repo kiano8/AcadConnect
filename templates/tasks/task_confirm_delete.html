@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Delete Task{% endblock %}
+{% block page_title %}Delete Task{% endblock %}
+
+{% block content %}
+<div style="max-width:460px;">
+  <div class="card form-glass">
+    <div class="card-header">
+      <span class="card-title" style="color:#f87171;">
+        <i class="ph ph-warning"></i> Delete Task
+      </span>
+    </div>
+    <div style="padding: 16px 0 8px;">
+      <p style="font-size:0.95rem;margin-bottom:6px;">
+        Are you sure you want to delete <strong>{{ task.title }}</strong>?
+      </p>
+      <p style="font-size:0.8rem;color:var(--text-muted);">
+        This action is <em>permanent</em> and cannot be undone. Any attached files will also be removed.
+      </p>
+      {% if task.subject %}
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">
+        Subject: <strong>{{ task.subject.name }}</strong> &middot; Due: <strong>{{ task.deadline|date:"M j, Y, g:i a" }}</strong>
+      </p>
+      {% endif %}
+    </div>
+    <form method="post" style="display:flex;gap:10px;margin-top:12px;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm" id="confirm-delete-task-btn"
+              style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);">
+        <i class="ph ph-trash"></i> Yes, Delete
+      </button>
+      <a href="{% url 'tasks:list' %}" class="btn btn-secondary btn-sm">
+        <i class="ph ph-x"></i> Cancel
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}

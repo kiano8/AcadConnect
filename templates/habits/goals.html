@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}My Goals{% endblock %}
+{% block page_title %}Personal Goals{% endblock %}
+
+{% block content %}
+<div class="flex-between" style="margin-bottom:22px;">
+  <div>
+    <h2 class="page-title"><i class="ph ph-target"></i> My Goals</h2>
+    <p class="page-subtitle">Set short and long-term goals and track your progress.</p>
+  </div>
+  <a href="{% url 'habits:habits' %}" class="btn btn-secondary">
+    <i class="ph ph-fire"></i> Daily Habits
+  </a>
+</div>
+
+<div class="grid grid-2 gap-20" style="align-items:start;">
+
+  <!-- ── Set New Goal Form ── -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon icon-teal">
+        <i class="ph ph-target"></i>
+      </div>
+      <div>
+        <h3 class="form-card-title">Set New Goal</h3>
+        <p class="form-card-sub">Define what you want to achieve — be specific!</p>
+      </div>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- Goal Details -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-flag"></i> Goal Details</div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.title.id_for_label }}">
+            Goal Title <span class="required-dot">*</span>
+          </label>
+          {{ form.title }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.title.help_text }}</div>
+          {% if form.title.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.title.errors|join:', ' }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+          {{ form.description }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.description.help_text }}</div>
+          {% if form.description.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.description.errors|join:', ' }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Type & Deadline -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-calendar-check"></i> Type &amp; Deadline</div>
+
+        <div class="grid grid-2" style="gap:14px;">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.goal_type.id_for_label }}">
+              Goal Type <span class="required-dot">*</span>
+            </label>
+            {{ form.goal_type }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.goal_type.help_text }}</div>
+            {% if form.goal_type.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.goal_type.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.target_date.id_for_label }}">Target Date</label>
+            {{ form.target_date }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.target_date.help_text }}</div>
+            {% if form.target_date.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.target_date.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="add-goal-btn">
+          <i class="ph ph-flag"></i> Set Goal
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Goals List ── -->
+  <div>
+    {% if goals %}
+    {% for goal in goals %}
+    <div class="card" style="margin-bottom:14px;position:relative;overflow:hidden;">
+      <div class="flex-between" style="margin-bottom:8px;">
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:var(--text-primary);">{{ goal.title }}</div>
+          <div
+            style="font-size:0.73rem;color:var(--text-muted);margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span><i class="ph ph-tag"></i> {{ goal.get_goal_type_display }}</span>
+            {% if goal.target_date %}
+            <span><i class="ph ph-calendar-blank"></i> {{ goal.target_date|date:"M j, Y" }}</span>
+            {% endif %}
+            {% if goal.days_remaining is not None %}
+            <span class="{% if goal.days_remaining < 3 %}text-coral{% else %}text-teal{% endif %}">
+              <i class="ph ph-clock"></i> {{ goal.days_remaining }}d left
+            </span>
+            {% endif %}
+          </div>
+        </div>
+        <span
+          class="badge {% if goal.status == 'completed' %}badge-green{% elif goal.status == 'abandoned' %}badge-coral{% else %}badge-teal{% endif %}">
+          {{ goal.get_status_display }}
+        </span>
+      </div>
+
+      {% if goal.description %}
+      <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;">{{ goal.description }}
+      </p>
+      {% endif %}
+
+      <div class="flex-between" style="margin-bottom:6px;">
+        <span
+          style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);">Progress</span>
+        <span style="font-size:0.85rem;font-weight:700;color:var(--accent-teal);">{{ goal.progress }}%</span>
+      </div>
+      <div class="progress-bar" style="margin-bottom:12px;">
+        <div
+          class="progress-fill {% if goal.progress >= 100 %}progress-excellent{% elif goal.progress >= 60 %}progress-good{% elif goal.progress >= 30 %}progress-fair{% else %}progress-poor{% endif %}"
+          data-progress="{{ goal.progress }}%" style=></div>
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        <form method="post" action="{% url 'habits:goal_progress' goal.pk %}"
+          style="flex:1;display:flex;gap:8px;align-items:center;">
+          {% csrf_token %}
+          <input type="range" name="progress" min="0" max="100" value="{{ goal.progress }}" style="flex:1;"
+            oninput="this.nextElementSibling.textContent=this.value+'%'">
+          <span style="font-size:.8rem;font-weight:700;color:var(--accent-teal);min-width:38px;"></span>
+          <button type="submit" class="btn btn-sm btn-secondary" title="Save progress">
+            <i class="ph ph-floppy-disk"></i>
+          </button>
+        </form>
+        <form method="post" action="{% url 'habits:goal_delete' goal.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-danger btn-icon" title="Delete goal"
+            onclick="return confirm('Delete &quot;{{ goal.title }}&quot;?')">
+            <i class="ph ph-trash"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card text-center" style="padding:56px 20px;">
+      <i class="ph ph-target"
+        style="font-size:3rem;color:var(--accent-teal);display:block;margin-bottom:14px;opacity:.5;"></i>
+      <h3 style="margin-bottom:6px;font-size:1rem;">No goals yet</h3>
+      <p class="text-muted" style="font-size:.875rem;">Use the form on the left to set your first goal.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

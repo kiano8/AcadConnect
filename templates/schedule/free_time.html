@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Free Time{% endblock %}
+{% block page_title %}Free Time Detection{% endblock %}
+
+{% block content %}
+<div class="flex-between mb-20">
+  <div>
+    <h2 class="page-title"><i class="ph ph-clock"></i> Today's Free Time — {{ today|date:"F j, Y" }}</h2>
+    <p class="page-subtitle">AI-detected free slots with activity suggestions.</p>
+  </div>
+  <a href="{% url 'schedule:calendar' %}" class="btn btn-secondary btn-sm">
+    <i class="ph ph-arrow-left"></i> Calendar
+  </a>
+</div>
+
+{% if free_slots %}
+<div class="grid grid-2 gap-20">
+  {% for s in suggestions %}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="ph ph-{% if s.type == 'study' %}books{% else %}coffee{% endif %}"></i>
+        {% if s.type == 'study' %}Study Window{% else %}Relax Window{% endif %}
+      </span>
+      <span class="badge {% if s.type == 'study' %}badge-teal{% else %}badge-green{% endif %}">
+        {{ s.slot.duration_minutes }}min
+      </span>
+    </div>
+    <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;">
+      <i class="ph ph-clock" style="color:var(--accent-teal);"></i>
+      {{ s.slot.start|date:"g:i A" }} – {{ s.slot.end|date:"g:i A" }}
+    </div>
+    <div style="background:var(--bg-primary);border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border-color);">
+      <div style="font-size:0.73rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Suggestion</div>
+      <div style="font-size:0.9rem;color:var(--text-secondary);">{{ s.activity }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card text-center" style="padding:52px 20px;">
+  <i class="ph ph-calendar-x" style="font-size:3rem;color:var(--accent-teal);display:block;margin-bottom:12px;"></i>
+  <h3 style="margin-bottom:8px;">Your schedule looks full today!</h3>
+  <p class="text-muted">No free slots of 30+ minutes found. Remember to take short breaks!</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Event{% endblock %}
+{% block page_title %}{{ action }} Event{% endblock %}
+
+{% block content %}
+<div class="form-page-wrap">
+
+  <div class="form-breadcrumb">
+    <a href="{% url 'schedule:calendar' %}" class="breadcrumb-link">
+      <i class="ph ph-calendar-check"></i> Schedule
+    </a>
+    <i class="ph ph-caret-right breadcrumb-sep"></i>
+    <span>{{ action }} Event</span>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon icon-blue">
+        <i class="ph ph-calendar-plus"></i>
+      </div>
+      <div>
+        <h2 class="form-card-title">{% if action == 'Add' %}New Event{% else %}Edit Event{% endif %}</h2>
+        <p class="form-card-sub">{% if action == 'Add' %}Schedule a class, meeting, reminder, or event{% else %}Update this event's details{% endif %}</p>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error"><i class="ph ph-warning-circle"></i> {{ form.non_field_errors|join:", " }}</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- ── Section 1: Event Details ── -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-calendar-blank"></i> Event Details</div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.title.id_for_label }}">
+            Event Title <span class="required-dot">*</span>
+          </label>
+          {{ form.title }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.title.help_text }}</div>
+          {% if form.title.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.title.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.event_type.id_for_label }}">
+            Event Type <span class="required-dot">*</span>
+          </label>
+          {{ form.event_type }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.event_type.help_text }}</div>
+          {% if form.event_type.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.event_type.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.description.id_for_label }}">Notes / Description</label>
+          {{ form.description }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.description.help_text }}</div>
+          {% if form.description.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.description.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ── Section 2: Date & Time ── -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-clock"></i> Date &amp; Time</div>
+
+        <!-- All-day checkbox -->
+        <div class="form-group" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--glass-bg);border:1px solid var(--border-color);border-radius:var(--radius-sm);margin-bottom:14px;">
+          {{ form.all_day }}
+          <label for="{{ form.all_day.id_for_label }}" style="cursor:pointer;font-size:0.875rem;font-weight:500;color:var(--text-primary);margin:0;">
+            All-day event
+          </label>
+          <span style="font-size:0.72rem;color:var(--text-muted);margin-left:4px;">{{ form.all_day.help_text }}</span>
+        </div>
+
+        <div class="grid grid-2" style="gap:14px;">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.start_datetime.id_for_label }}">
+              Start <span class="required-dot">*</span>
+            </label>
+            {{ form.start_datetime }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.start_datetime.help_text }}</div>
+            {% if form.start_datetime.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.start_datetime.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.end_datetime.id_for_label }}">
+              End <span class="required-dot">*</span>
+            </label>
+            {{ form.end_datetime }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.end_datetime.help_text }}</div>
+            {% if form.end_datetime.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.end_datetime.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section 3: Appearance ── -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-palette"></i> Appearance</div>
+        <div class="form-group" style="display:flex;align-items:center;gap:16px;">
+          <div style="flex:1;">
+            <label class="form-label" for="{{ form.color.id_for_label }}">Calendar Colour</label>
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.color.help_text }}</div>
+          </div>
+          {{ form.color }}
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="save-event-btn">
+          <i class="ph ph-{% if action == 'Add' %}plus-circle{% else %}floppy-disk{% endif %}"></i>
+          {{ action }} Event
+        </button>
+        <a href="{% url 'schedule:calendar' %}" class="btn btn-secondary">
+          <i class="ph ph-x"></i> Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

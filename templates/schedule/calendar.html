@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Schedule{% endblock %}
+{% block page_title %}Schedule{% endblock %}
+
+{% block content %}
+<div class="flex-between mb-20">
+  <div>
+    <h2 class="page-title"><i class="ph ph-calendar-check"></i> My Schedule</h2>
+    <p class="page-subtitle">Drag events to reschedule. Click to view details.</p>
+  </div>
+  <div class="flex gap-8">
+    <a href="{% url 'schedule:classes' %}" class="btn btn-secondary">
+      <i class="ph ph-chalkboard"></i> Classes
+    </a>
+    <a href="{% url 'schedule:free_time' %}" class="btn btn-secondary">
+      <i class="ph ph-clock"></i> Free Time
+    </a>
+    <a href="{% url 'schedule:event_create' %}" class="btn btn-primary" id="add-event-btn">
+      <i class="ph ph-plus"></i> Add Event
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div id="calendar"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const calEl = document.getElementById('calendar');
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  const calendar = new FullCalendar.Calendar(calEl, {
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    },
+    height: 'auto',
+    events: '{% url "schedule:api_events" %}',
+    editable: true,
+    selectable: true,
+    eventColor: '#2A9D8F',
+    eventBorderColor: 'transparent',
+    dayMaxEvents: 3,
+    select: function() {
+      window.location.href = '{% url "schedule:event_create" %}';
+    },
+    eventClick: function(info) {
+      if (info.event.extendedProps.description) {
+        alert(`${info.event.title}\n\n${info.event.extendedProps.description}`);
+      }
+    },
+  });
+  calendar.render();
+});
+</script>
+{% endblock %}

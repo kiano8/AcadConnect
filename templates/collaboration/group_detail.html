@@ -1,0 +1,1161 @@
+{% extends 'base.html' %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block page_title %}{{ group.name }}{% endblock %}
+
+{% block content %}
+<!-- ══ Page Header ══ -->
+<div class="collab-header">
+  <div class="collab-header-left">
+    <h2 class="page-title"><i class="ph ph-folders"></i> {{ group.name }}</h2>
+    <p class="page-subtitle">
+      {% if is_creator %}<span class="role-badge role-creator"><i class="ph ph-crown-simple"></i> Creator</span>{% else %}<span class="role-badge role-member"><i class="ph ph-user"></i> Member</span>{% endif %}
+      &nbsp;·&nbsp; {{ group.members.count }} member{{ group.members.count|pluralize }}
+      &nbsp;·&nbsp; {{ tasks|length }} task{{ tasks|length|pluralize }}
+    </p>
+  </div>
+  <div class="collab-header-actions">
+    {% if is_creator %}
+    <form method="post" action="{% url 'collaboration:delete_group' group.pk %}" id="delete-group-form">
+      {% csrf_token %}
+      <button type="button" class="btn btn-danger-outline" id="delete-group-btn" title="Delete this group">
+        <i class="ph ph-trash"></i> Delete Group
+      </button>
+    </form>
+    {% endif %}
+    <a href="{% url 'collaboration:list' %}" class="btn btn-secondary">
+      <i class="ph ph-arrow-left"></i> All Groups
+    </a>
+  </div>
+</div>
+
+<!-- ══ Three-Column Layout ══ -->
+<div class="collab-grid" id="collab-root" data-group-pk="{{ group.pk }}" data-current-user="{{ request.user.username }}">
+
+  <!-- ── LEFT: Tasks ── -->
+  <div class="collab-col-main">
+
+    <!-- Add Task Form (creator only) -->
+    {% if is_creator %}
+    <div class="form-card" id="add-task-card">
+      <div class="form-card-header">
+        <div class="form-card-icon icon-teal"><i class="ph ph-plus-circle"></i></div>
+        <div>
+          <h3 class="form-card-title">Add Task</h3>
+          <p class="form-card-sub">Create and assign a task to team members</p>
+        </div>
+        <button type="button" class="collapse-toggle ml-auto" id="toggle-add-task" aria-label="Toggle form">
+          <i class="ph ph-caret-up" id="toggle-add-task-icon"></i>
+        </button>
+      </div>
+
+      <div id="add-task-body">
+          <form method="post" action="{% url 'collaboration:add_task' group.pk %}" novalidate id="add-task-form" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="status" value="todo">
+
+          <!-- Hidden inputs for selected users -->
+          <div id="add-assigned-hidden"></div>
+
+          <div class="form-section">
+            <div class="form-section-label"><i class="ph ph-clipboard-text"></i> Task Details</div>
+            <div class="form-group">
+              <label class="form-label" for="{{ task_form.title.id_for_label }}">Title <span class="required-dot">*</span></label>
+              {{ task_form.title }}
+              {% if task_form.title.errors %}<div class="form-error"><i class="ph ph-warning-circle"></i> {{ task_form.title.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="{{ task_form.description.id_for_label }}">Description</label>
+              {{ task_form.description }}
+            </div>
+            <div class="grid grid-2" style="gap:14px;">
+              <div class="form-group">
+                <label class="form-label" for="{{ task_form.priority.id_for_label }}">Priority</label>
+                {{ task_form.priority }}
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="{{ task_form.deadline.id_for_label }}">Deadline</label>
+                {{ task_form.deadline }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex; align-items:baseline; gap:6px;" for="{{ task_form.attachment.id_for_label }}">
+                <span>For Reference</span>
+                <span style="font-size:0.75rem; color:var(--text-muted); text-transform:none; font-weight:normal;">(optional)</span>
+              </label>
+              {{ task_form.attachment }}
+            </div>
+
+            <div class="form-group" style="margin-top:20px;">
+              <label class="form-label"><i class="ph ph-check-square-offset"></i> Subtasks / Checklist</label>
+              <div id="add-subtask-container" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="add-subtask-input" class="form-control" placeholder="Add a new subtask…">
+                <button type="button" class="btn btn-secondary" id="add-subtask-btn" style="white-space:nowrap;">
+                  <i class="ph ph-plus"></i> Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assignee Picker -->
+          <div class="form-section">
+            <div class="form-section-label"><i class="ph ph-users"></i> Assign To</div>
+            <div class="user-picker" id="add-user-picker" data-target="add-assigned-hidden" data-name="assigned_to">
+              <div class="user-picker-search">
+                <i class="ph ph-magnifying-glass"></i>
+                <input type="text" placeholder="Search members…" class="user-picker-input" id="add-user-search" autocomplete="off">
+              </div>
+              <div class="user-picker-list" id="add-user-list">
+                {% for member in group.members.all %}
+                <div class="user-pick-item" data-uid="{{ member.pk }}" data-name="{{ member.username }}">
+                  <div class="user-avt user-avt-sm">{{ member.username|first|upper }}</div>
+                  <span class="user-pick-name">{{ member.username }}</span>
+                  <i class="ph ph-check-circle user-pick-check"></i>
+                </div>
+                {% empty %}
+                <p class="text-muted" style="padding:10px;font-size:.8rem;">No members yet.</p>
+                {% endfor %}
+              </div>
+              <div class="user-pick-summary" id="add-pick-summary" style="display:none;"></div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="add-gtask-btn">
+              <i class="ph ph-plus"></i> Add Task
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Task List -->
+    <div class="card" id="task-list-card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-clipboard-text"></i> Project Tasks</span>
+        <span class="badge badge-teal">{{ tasks|length }}</span>
+      </div>
+
+      {% for task in tasks %}
+      {% with task_date=task.deadline|date:"Y-m-d" task_time=task.deadline|date:"H:i" %}
+      <div class="task-card task-status-{{ task.status }}" id="task-card-{{ task.pk }}">
+        <div class="task-card-top">
+          <div class="task-dot task-dot-{{ task.status }}"></div>
+          <div class="task-info" style="flex:1;">
+            <div class="task-title">{{ task.title }}</div>
+            {% if task.description %}
+            <div class="task-desc">{{ task.description }}</div>
+            {% endif %}
+            
+            {% if task.checklist_items.all %}
+            <div class="task-checklist" style="margin-top:12px; margin-bottom:12px; display:flex; flex-direction:column; gap:6px;">
+              {% for item in task.checklist_items.all %}
+              <label class="custom-checkbox" style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+                <input type="checkbox" class="task-checklist-toggle" data-task-pk="{{ task.pk }}" data-item-pk="{{ item.pk }}" {% if item.is_done %}checked{% endif %} style="margin-top:3px;">
+                <span class="checklist-text {% if item.is_done %}is-done{% endif %}">{{ item.content }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            {% endif %}
+            
+            {% if task.attachment %}
+            <div class="task-references" style="margin-top:8px; margin-bottom:10px; padding:10px; background:var(--surface); border-radius:8px; border:1px solid var(--border-color);">
+              <div>
+                <a href="{{ task.attachment.url }}" target="_blank" class="badge badge-teal" style="text-decoration:none;">
+                  <i class="ph ph-paperclip"></i> View Reference
+                </a>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="task-meta">
+              <!-- Status badge -->
+              <span class="badge {% if task.status == 'done' %}badge-green{% elif task.status == 'in_progress' %}badge-gold{% else %}badge-teal{% endif %}">
+                {% if task.status == 'done' %}<i class="ph ph-check-circle"></i>{% elif task.status == 'in_progress' %}<i class="ph ph-spinner-gap spin"></i>{% else %}<i class="ph ph-circle"></i>{% endif %}
+                {{ task.get_status_display }}
+              </span>
+              <!-- Priority badge -->
+              <span class="badge priority-{{ task.priority }}">
+                <i class="ph ph-flag"></i> {{ task.get_priority_display }}
+              </span>
+              <!-- Deadline -->
+              {% if task.deadline %}<span class="badge badge-neutral"><i class="ph ph-calendar-blank"></i> Due {{ task.deadline|date:"M j" }}</span>{% endif %}
+              <!-- Assigned users avatars -->
+              <span class="assignee-avatars">
+                {% for u in task.assigned_to.all %}
+                <div class="user-avt user-avt-xs" title="{{ u.username }}">{{ u.username|first|upper }}</div>
+                {% empty %}
+                <span style="font-size:.75rem;color:var(--text-muted);">Unassigned</span>
+                {% endfor %}
+              </span>
+            </div>
+          </div>
+
+          <!-- Task Actions -->
+          <div class="task-actions">
+            <!-- Status dropdown (assigned member or creator) -->
+            {% if is_creator or request.user in task.assigned_to.all %}
+            <form method="post" action="{% url 'collaboration:task_status' group.pk task.pk %}" class="status-form">
+              {% csrf_token %}
+              <select name="status" class="status-select" onchange="this.form.submit()" title="Update status">
+                <option value="todo"        {% if task.status == 'todo'        %}selected{% endif %}>To Do</option>
+                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="done"        {% if task.status == 'done'        %}selected{% endif %}>Done</option>
+              </select>
+            </form>
+            {% endif %}
+
+            <!-- Creator-only: edit + delete -->
+            {% if is_creator %}
+            <button class="icon-btn icon-btn-edit edit-task-btn" title="Edit Task"
+                    data-pk="{{ task.pk }}"
+                    data-title="{{ task.title }}"
+                    data-desc="{{ task.description }}"
+                    data-priority="{{ task.priority }}"
+                    data-status="{{ task.status }}"
+                    data-task-deadline="{% if task.deadline %}{{ task_date }}T{{ task_time }}{% endif %}"
+                    data-assigned="{% for u in task.assigned_to.all %}{{ u.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
+              <i class="ph ph-pencil-simple"></i>
+            </button>
+            <form method="post" action="{% url 'collaboration:delete_task' group.pk task.pk %}" class="inline-form delete-task-form">
+              {% csrf_token %}
+              <button type="submit" class="icon-btn icon-btn-delete" title="Delete Task">
+                <i class="ph ph-trash"></i>
+              </button>
+            </form>
+            {% endif %}
+
+            <!-- Task chat toggle (assigned or creator) -->
+            {% if task.can_see_chat %}
+            <button class="icon-btn icon-btn-chat toggle-chat-btn" title="Task Discussion"
+                    data-pk="{{ task.pk }}">
+              <i class="ph ph-chat-circle-text"></i>
+            </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Inline Task Chat -->
+        {% if task.can_see_chat %}
+        <div class="task-chat-panel" id="task-chat-{{ task.pk }}" style="display:none;">
+          <div class="task-chat-label"><i class="ph ph-chat-circle-text"></i> Task Discussion
+            <span class="task-chat-members">
+              ({% for u in task.assigned_to.all %}{{ u.username }}{% if not forloop.last %}, {% endif %}{% endfor %})
+            </span>
+          </div>
+          <div class="task-chat-box" id="task-chat-box-{{ task.pk }}"
+               data-task-pk="{{ task.pk }}"
+               data-group-pk="{{ group.pk }}">
+            {% for msg in task.chat_messages %}
+            <div class="msg-row {% if msg.sender == request.user %}msg-row-me{% else %}msg-row-them{% endif %}"
+                 data-msg-id="{{ msg.pk }}">
+              <div class="msg-avt">{{ msg.sender.username|first|upper }}</div>
+              <div>
+                {% if msg.sender != request.user %}<div class="msg-name">{{ msg.sender.username }}</div>{% endif %}
+                <div class="msg-bubble {% if msg.sender == request.user %}me{% else %}them{% endif %}">{{ msg.content }}</div>
+                <div class="msg-time">{{ msg.timestamp|time:"g:i A" }}</div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="chat-empty"><i class="ph ph-chat-circle"></i><p>No messages yet — start the discussion!</p></div>
+            {% endfor %}
+          </div>
+          <form class="task-chat-form js-task-chat-form" data-task-pk="{{ task.pk }}" data-group-pk="{{ group.pk }}">
+            {% csrf_token %}
+            <input type="text" class="form-control task-chat-input" id="task-chat-input-{{ task.pk }}"
+                   placeholder="Message this task…" autocomplete="off">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="ph ph-paper-plane-tilt"></i></button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="empty-state">
+        <i class="ph ph-clipboard"></i>
+        <p>No tasks yet.{% if is_creator %} Add the first one above!{% endif %}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Chat + Members ── -->
+  <div class="collab-col-side">
+
+    <!-- Group Chat -->
+    <div class="card chat-card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-chat-circle-dots"></i> Group Chat</span>
+        <div class="member-avatars-row">
+          {% for m in group.members.all %}
+          <div class="user-avt user-avt-xs" title="{{ m.username }}">{{ m.username|first|upper }}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="chat-box" id="chat-box"
+           data-group-pk="{{ group.pk }}"
+           data-poll-url="{% url 'collaboration:messages_api' group.pk %}">
+        {% for msg in messages %}
+        <div class="msg-row {% if msg.sender == request.user %}msg-row-me{% else %}msg-row-them{% endif %}">
+          <div class="msg-avt">{{ msg.sender.username|first|upper }}</div>
+          <div>
+            {% if msg.sender != request.user %}<div class="msg-name">{{ msg.sender.username }}</div>{% endif %}
+            <div class="msg-bubble {% if msg.sender == request.user %}me{% else %}them{% endif %}">{{ msg.content }}</div>
+            <div class="msg-time">{{ msg.timestamp|time:"g:i A" }}</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="chat-empty" id="group-chat-empty">
+          <i class="ph ph-chat-circle"></i>
+          <p>No messages yet — start the conversation!</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <form class="chat-form" id="group-chat-form" onsubmit="sendGroupMessage(event)">
+        {% csrf_token %}
+        <input type="text" name="content" class="form-control" id="chat-input"
+               placeholder="Type a message…" autocomplete="off" required>
+        <button type="submit" class="btn btn-primary" id="send-msg-btn" title="Send">
+          <i class="ph ph-paper-plane-tilt"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Members Panel -->
+    <div class="card members-card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-users"></i> Members</span>
+        <span class="badge badge-teal">{{ group.members.count }}</span>
+      </div>
+
+      <!-- Add member (creator only) -->
+      {% if is_creator %}
+      <div class="add-member-section">
+        <div class="user-picker" id="add-member-picker"
+             data-search-url="{% url 'collaboration:user_search' %}?group={{ group.pk }}"
+             data-add-url="{% url 'collaboration:add_member' group.pk %}">
+          <div class="user-picker-search">
+            <i class="ph ph-magnifying-glass"></i>
+            <input type="text" placeholder="Search users to add…" class="user-picker-input"
+                   id="member-search-input" autocomplete="off">
+          </div>
+          <div class="user-picker-results" id="member-search-results" style="display:none;"></div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Member list -->
+      <ul class="member-list">
+        {% for member in group.members.all %}
+        <li class="member-item">
+          <div class="user-avt user-avt-sm">{{ member.username|first|upper }}</div>
+          <div class="member-info">
+            <span class="member-name">{{ member.username }}</span>
+            {% if member == group.created_by %}
+            <span class="role-badge role-creator"><i class="ph ph-crown-simple"></i> Creator</span>
+            {% else %}
+            <span class="role-badge role-member">Member</span>
+            {% endif %}
+          </div>
+          {% if is_creator and member != request.user %}
+          <form method="post" action="{% url 'collaboration:remove_member' group.pk member.pk %}" style="margin-left:auto;">
+            {% csrf_token %}
+            <button type="submit" class="icon-btn icon-btn-delete icon-btn-xs" title="Remove {{ member.username }}">
+              <i class="ph ph-x"></i>
+            </button>
+          </form>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+  </div><!-- /collab-col-side -->
+</div><!-- /collab-grid -->
+
+
+<!-- ══ Edit Task Modal ══ -->
+<div class="modal-overlay" id="edit-task-modal" style="display:none;" onclick="closeEditModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="ph ph-pencil-simple"></i> Edit Task</h3>
+      <button class="modal-close" onclick="closeEditModal()"><i class="ph ph-x"></i></button>
+    </div>
+    <!-- Add enctype to correctly upload files -->
+    <form method="post" action="" novalidate id="edit-task-form" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- Hidden inputs for assignees -->
+      <div id="edit-assigned-hidden"></div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Title <span class="required-dot">*</span></label>
+          <input type="text" name="title" id="edit-title" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="description" id="edit-description" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="grid grid-2" style="gap:14px;">
+          <div class="form-group">
+            <label class="form-label">Priority</label>
+            <select name="priority" id="edit-priority" class="form-control">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select name="status" id="edit-status" class="form-control">
+              <option value="todo">To Do</option>
+              <option value="in_progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" style="display:flex; align-items:baseline; gap:6px;">
+            <span>Update Reference</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); text-transform:none; font-weight:normal;">(optional)</span>
+          </label>
+          <input type="file" name="attachment" id="edit-attachment" class="form-control">
+        </div>
+
+        <div class="form-group" style="margin-top:20px;">
+          <label class="form-label"><i class="ph ph-check-square-offset"></i> Subtasks / Checklist</label>
+          <div id="edit-subtask-container" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="edit-subtask-input" class="form-control" placeholder="Add a new subtask…">
+            <button type="button" class="btn btn-secondary" id="edit-subtask-btn" style="white-space:nowrap;">
+              <i class="ph ph-plus"></i> Add
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Deadline</label>
+          <input type="datetime-local" name="deadline" id="edit-deadline" class="form-control">
+        </div>
+
+        <!-- Assignee Picker (modal) -->
+        <div class="form-section" style="margin-top:8px;">
+          <div class="form-section-label"><i class="ph ph-users"></i> Assigned Members</div>
+          <div class="user-picker" id="edit-user-picker" data-target="edit-assigned-hidden" data-name="assigned_to">
+            <div class="user-picker-search">
+              <i class="ph ph-magnifying-glass"></i>
+              <input type="text" placeholder="Search members…" class="user-picker-input" id="edit-user-search" autocomplete="off">
+            </div>
+            <div class="user-picker-list" id="edit-user-list">
+              {% for member in group.members.all %}
+              <div class="user-pick-item" data-uid="{{ member.pk }}" data-name="{{ member.username }}">
+                <div class="user-avt user-avt-sm">{{ member.username|first|upper }}</div>
+                <span class="user-pick-name">{{ member.username }}</span>
+                <i class="ph ph-check-circle user-pick-check"></i>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="user-pick-summary" id="edit-pick-summary" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ Delete Confirm Modal ══ -->
+<div class="modal-overlay" id="delete-group-modal" style="display:none;" onclick="closeDeleteGroupModal(event)">
+  <div class="modal-box modal-box-sm" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="ph ph-warning"></i> Delete Group</h3>
+      <button class="modal-close" onclick="closeDeleteGroupModal()"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to permanently delete <strong>{{ group.name }}</strong>? This will remove all tasks, messages, and members. This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDeleteGroupModal()">Cancel</button>
+      <button type="button" class="btn btn-danger" onclick="document.getElementById('delete-group-form').submit()">
+        <i class="ph ph-trash"></i> Delete Group
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ Styles ══ -->
+<style>
+/* ── Layout ── */
+.collab-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:22px; flex-wrap:wrap; }
+.collab-header-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.collab-grid { display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start; }
+.collab-col-main { display:flex; flex-direction:column; gap:18px; }
+.collab-col-side { display:flex; flex-direction:column; gap:18px; position:sticky; top:24px; }
+
+/* ── Role badges ── */
+.role-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:.7rem; font-weight:600; letter-spacing:.03em; }
+.role-creator { background:linear-gradient(135deg,#f59e0b22,#f59e0b11); color:#f59e0b; border:1px solid #f59e0b44; }
+.role-member  { background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border-color); }
+
+/* ── Task Card ── */
+.task-card { background:var(--surface-2); border-radius:12px; padding:14px 16px; border-left:3px solid transparent; margin-bottom:10px; transition:box-shadow .18s,transform .18s; }
+.task-card:hover { box-shadow:var(--shadow-lg); transform:translateY(-1px); }
+.task-card-top { display:flex; align-items:flex-start; gap:12px; }
+.task-dot { width:9px; height:9px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+.task-title { font-weight:600; font-size:.9rem; color:var(--text-primary); margin-bottom:3px; }
+.task-desc { font-size:.78rem; color:var(--text-muted); margin-bottom:6px; line-height:1.5; }
+.task-meta { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:4px; }
+.task-actions { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.checklist-text { font-size:.9rem; color:var(--text-primary); transition:color .18s; }
+.checklist-text.is-done { text-decoration:line-through; color:var(--text-muted); }
+
+.task-status-todo        { border-left-color: var(--accent-teal); }
+.task-status-in_progress { border-left-color: var(--accent-gold); }
+.task-status-done        { border-left-color: var(--accent-green); }
+.task-dot-todo        { background: var(--accent-teal); }
+.task-dot-in_progress { background: var(--accent-gold); animation: taskPulse 1.8s ease-in-out infinite; }
+.task-dot-done        { background: var(--accent-green); }
+@keyframes taskPulse {
+  0%   { box-shadow: 0 0 0 0   rgba(233,196,106,.55); }
+  60%  { box-shadow: 0 0 0 7px rgba(233,196,106,0); }
+  100% { box-shadow: 0 0 0 0   rgba(233,196,106,0); }
+}
+
+/* ── Priority badges ── */
+.priority-low    { background:#10b98122; color:#10b981; border:1px solid #10b98133; }
+.priority-medium { background:#f59e0b22; color:#f59e0b; border:1px solid #f59e0b33; }
+.priority-high   { background:#ef444422; color:#ef4444; border:1px solid #ef444433; }
+.badge-neutral   { background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border-color); }
+
+/* ── Assignee avatars in task card ── */
+.assignee-avatars { display:inline-flex; gap:-4px; }
+.assignee-avatars .user-avt-xs { margin-left:-4px; border:2px solid var(--surface-2); }
+.user-avt-xs { width:22px; height:22px; font-size:.62rem; }
+.user-avt-sm { width:28px; height:28px; font-size:.7rem; }
+
+/* ── Icon buttons ── */
+.icon-btn { width:30px; height:30px; border-radius:7px; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:.95rem; transition:background .15s,transform .12s; background:transparent; }
+.icon-btn:hover { transform:scale(1.1); }
+.icon-btn-edit   { color:var(--accent-teal);  } .icon-btn-edit:hover   { background:var(--accent-teal)22; }
+.icon-btn-delete { color:#ef4444;             } .icon-btn-delete:hover { background:#ef444422; }
+.icon-btn-chat   { color:var(--accent-gold);  } .icon-btn-chat:hover   { background:var(--accent-gold)22; }
+.icon-btn-xs { width:24px; height:24px; font-size:.78rem; }
+.inline-form { display:inline; }
+.ml-auto { margin-left:auto; }
+
+/* ── Status select ── */
+.status-select { padding:3px 7px; font-size:.72rem; background:var(--surface-3); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px; cursor:pointer; }
+
+/* ── Collapse toggle ── */
+.collapse-toggle { background:transparent; border:none; cursor:pointer; color:var(--text-muted); font-size:1.1rem; padding:4px; border-radius:6px; }
+.collapse-toggle:hover { background:var(--surface-3); }
+
+/* ── Empty state ── */
+.empty-state { text-align:center; padding:36px 20px; }
+.empty-state i { font-size:2.4rem; color:var(--accent-teal); display:block; margin-bottom:10px; opacity:.45; }
+.empty-state p { color:var(--text-muted); font-size:.875rem; }
+
+/* ══ USER PICKER ══ */
+.user-picker { border:1px solid var(--border-color); border-radius:10px; overflow:hidden; background:var(--surface-2); }
+.user-picker-search { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--border-color); background:var(--surface-3); }
+.user-picker-search i { color:var(--text-muted); font-size:1rem; }
+.user-picker-input { flex:1; background:transparent; border:none; outline:none; font-size:.85rem; color:var(--text-primary); }
+.user-picker-list { max-height:200px; overflow-y:auto; padding:6px; display:flex; flex-direction:column; gap:4px; }
+
+/* User pick item — the key active-state element */
+.user-pick-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:8px; cursor:pointer;
+  border:2px solid transparent;
+  transition:background .15s, border-color .15s, transform .12s;
+  position:relative; user-select:none;
+}
+.user-pick-item:hover { background:var(--surface-3); }
+.user-pick-item.selected {
+  background: linear-gradient(135deg, var(--accent-teal)18, var(--accent-teal)08);
+  border-color: var(--accent-teal);
+  transform:scale(1.012);
+}
+.user-pick-name { font-size:.85rem; color:var(--text-primary); flex:1; }
+.user-pick-check { font-size:1.1rem; color:var(--accent-teal); opacity:0; transition:opacity .18s, transform .18s; transform:scale(.6); }
+.user-pick-item.selected .user-pick-check { opacity:1; transform:scale(1); }
+
+.user-pick-summary { padding:8px 12px; border-top:1px solid var(--border-color); font-size:.78rem; color:var(--accent-teal); font-weight:600; }
+
+/* Search results for member add */
+.user-picker-results { border-top:1px solid var(--border-color); padding:6px; display:flex; flex-direction:column; gap:4px; max-height:180px; overflow-y:auto; }
+.search-result-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; cursor:pointer; border:2px solid transparent; transition:background .15s, border-color .15s; }
+.search-result-item:hover { background:var(--surface-3); }
+.search-result-item.already { opacity:.5; cursor:default; }
+.search-result-name { font-size:.85rem; color:var(--text-primary); flex:1; }
+.search-result-badge { font-size:.7rem; color:var(--text-muted); }
+.search-spinner { text-align:center; padding:10px; color:var(--text-muted); font-size:.8rem; }
+
+/* ══ CHAT ══ */
+.chat-card { display:flex; flex-direction:column; }
+.chat-box { height:330px; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; scroll-behavior:smooth; }
+.chat-form { display:flex; gap:8px; padding:12px; border-top:1px solid var(--border-color); }
+.chat-form .form-control { flex:1; }
+
+.msg-row { display:flex; gap:8px; align-items:flex-end; }
+.msg-row-me { flex-direction:row-reverse; }
+.msg-avt { width:28px; height:28px; flex-shrink:0; border-radius:50%; background:var(--accent-teal); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:700; }
+.msg-row-me .msg-avt { background:var(--accent-purple, #8b5cf6); }
+.msg-name { font-size:.7rem; color:var(--text-muted); margin-bottom:2px; padding-left:2px; }
+.msg-bubble { padding:8px 12px; border-radius:14px; font-size:.83rem; line-height:1.5; max-width:240px; word-break:break-word; }
+.msg-bubble.them { background:var(--surface-3); color:var(--text-primary); border-bottom-left-radius:4px; }
+.msg-bubble.me   { background:var(--accent-teal); color:#fff; border-bottom-right-radius:4px; }
+.msg-row-me .msg-bubble { text-align:right; }
+.msg-time { font-size:.65rem; color:var(--text-muted); margin-top:2px; padding-left:2px; }
+.msg-row-me .msg-time { text-align:right; padding-right:2px; }
+
+.chat-empty { text-align:center; margin:auto; color:var(--text-muted); }
+.chat-empty i { font-size:2rem; display:block; margin-bottom:8px; opacity:.4; }
+.chat-empty p { font-size:.825rem; }
+
+/* ── Task-level chat ── */
+.task-chat-panel { border-top:1px solid var(--border-color); margin-top:12px; padding-top:12px; }
+.task-chat-label { font-size:.75rem; font-weight:600; color:var(--accent-gold); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.task-chat-members { color:var(--text-muted); font-weight:400; }
+.task-chat-box { min-height:80px; max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; scroll-behavior:smooth; margin-bottom:10px; }
+.task-chat-form { display:flex; gap:8px; }
+.task-chat-input { flex:1; }
+.btn-sm { padding:6px 12px; font-size:.8rem; }
+
+/* ══ MEMBERS ══ */
+.add-member-section { padding:12px 14px; border-bottom:1px solid var(--border-color); }
+.member-list { list-style:none; margin:0; padding:10px 14px; display:flex; flex-direction:column; gap:8px; }
+.member-item { display:flex; align-items:center; gap:10px; }
+.member-info { display:flex; flex-direction:column; gap:2px; }
+.member-name { font-size:.85rem; font-weight:600; color:var(--text-primary); }
+.member-avatars-row { display:flex; }
+.member-avatars-row .user-avt-xs { margin-left:-4px; border:2px solid var(--surface); }
+
+/* ══ MODALS ══ */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(3px); z-index:900; display:flex; align-items:center; justify-content:center; animation:fadeIn .2s; }
+.modal-box { background:var(--surface); border:1px solid var(--border-color); border-radius:16px; width:100%; max-width:520px; box-shadow:0 24px 60px rgba(0,0,0,.35); animation:slideUp .25s ease; }
+.modal-box-sm { max-width:380px; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 14px; border-bottom:1px solid var(--border-color); }
+.modal-header h3 { font-size:1rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+.modal-close { background:transparent; border:none; cursor:pointer; color:var(--text-muted); font-size:1.2rem; }
+.modal-body { padding:18px 22px; display:flex; flex-direction:column; gap:14px; max-height:65vh; overflow-y:auto; }
+.modal-footer { padding:14px 22px 18px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:10px; }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes slideUp { from { transform:translateY(18px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+
+/* ── Danger button ── */
+.btn-danger { background:#ef4444; color:#fff; border:none; }
+.btn-danger:hover { background:#dc2626; }
+.btn-danger-outline { background:transparent; border:1.5px solid #ef444466; color:#ef4444; }
+.btn-danger-outline:hover { background:#ef444415; }
+
+/* ── Spin animation ── */
+.spin { animation: spin 1.2s linear infinite; display:inline-block; }
+@keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .collab-grid { grid-template-columns:1fr; }
+  .collab-col-side { position:static; }
+}
+</style>
+
+
+{% endblock %}
+
+<!-- ══ JavaScript ══ -->
+{% block extra_js %}
+<script>
+const collabRoot = document.getElementById('collab-root');
+const GROUP_PK = parseInt(collabRoot.dataset.groupPk);
+const CURRENT_USER = collabRoot.dataset.currentUser;
+const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+// ── Collapse add-task form ──
+(function(){
+  const btn = document.getElementById('toggle-add-task');
+  const body = document.getElementById('add-task-body');
+  const icon = document.getElementById('toggle-add-task-icon');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const hidden = body.style.display === 'none';
+    body.style.display = hidden ? '' : 'none';
+    icon.className = hidden ? 'ph ph-caret-up' : 'ph ph-caret-down';
+  });
+})();
+
+// ══════════════════════════
+// USER PICKER (active state)
+// ══════════════════════════
+function initPicker(pickerId) {
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  const target = picker.dataset.target;
+  const inputName = picker.dataset.name;
+  const listEl   = picker.querySelector('.user-picker-list');
+  const searchEl = picker.querySelector('.user-picker-input');
+  const summaryEl = picker.querySelector('.user-pick-summary');
+  const selected = new Set();
+
+  function renderHidden() {
+    const container = document.getElementById(target);
+    if (!container) return;
+    container.innerHTML = '';
+    selected.forEach(uid => {
+      const inp = document.createElement('input');
+      inp.type  = 'hidden';
+      inp.name  = inputName;
+      inp.value = uid;
+      container.appendChild(inp);
+    });
+    // Update summary
+    if (selected.size > 0) {
+      summaryEl.style.display = '';
+      summaryEl.textContent = `${selected.size} member${selected.size > 1 ? 's' : ''} selected`;
+    } else {
+      summaryEl.style.display = 'none';
+    }
+  }
+
+  // Click to select/deselect
+  listEl.addEventListener('click', e => {
+    const item = e.target.closest('.user-pick-item');
+    if (!item) return;
+    const uid = item.dataset.uid;
+    if (selected.has(uid)) {
+      selected.delete(uid);
+      item.classList.remove('selected');
+    } else {
+      selected.add(uid);
+      item.classList.add('selected');
+    }
+    renderHidden();
+  });
+
+  // Filter by search and fetch remote users
+  let pickerTimer;
+  if (searchEl) {
+    searchEl.addEventListener('input', () => {
+      clearTimeout(pickerTimer);
+      const q = searchEl.value.trim().toLowerCase();
+      
+      // 1. Local filter
+      listEl.querySelectorAll('.user-pick-item').forEach(item => {
+        const name = item.dataset.name.toLowerCase();
+        item.style.display = name.includes(q) ? '' : 'none';
+      });
+
+      // 2. Fetch remote options
+      if (q.length >= 1) {
+        pickerTimer = setTimeout(() => {
+          fetch(`/collaboration/api/users/search/?q=${encodeURIComponent(q)}&group=${GROUP_PK}`)
+            .then(r => r.json())
+            .then(data => {
+              data.users.forEach(u => {
+                // If the user is already a member, they are already in the local list.
+                if (u.already_member) return; 
+                // If we already fetched and added them, skip.
+                if (listEl.querySelector(`[data-uid="${u.id}"]`)) return; 
+                
+                const div = document.createElement('div');
+                div.className = 'user-pick-item';
+                div.dataset.uid = u.id;
+                div.dataset.name = u.username;
+                div.innerHTML = `
+                  <div class="user-avt user-avt-sm">${u.initial}</div>
+                  <span class="user-pick-name">${u.username} <span style="font-size:0.7rem;color:var(--text-muted);">(new member)</span></span>
+                  <i class="ph ph-check-circle user-pick-check"></i>
+                `;
+                if (selected.has(u.id.toString())) {
+                  div.classList.add('selected');
+                }
+                listEl.appendChild(div);
+              });
+            })
+            .catch(() => {});
+        }, 300);
+      }
+    });
+  }
+
+  // Expose select-by-ids (used by edit modal)
+  picker._setSelected = (ids) => {
+    selected.clear();
+    listEl.querySelectorAll('.user-pick-item').forEach(item => {
+      item.classList.remove('selected');
+      if (ids.includes(parseInt(item.dataset.uid))) {
+        item.classList.add('selected');
+        selected.add(item.dataset.uid);
+      }
+    });
+    renderHidden();
+  };
+}
+
+initPicker('add-user-picker');
+initPicker('edit-user-picker');
+
+
+// ══════════════════════════
+// MEMBER SEARCH (live API)
+// ══════════════════════════
+(function(){
+  const inp = document.getElementById('member-search-input');
+  if (!inp) return;
+  const resultsEl = document.getElementById('member-search-results');
+  const searchUrl = document.getElementById('add-member-picker').dataset.searchUrl;
+  const addUrl    = document.getElementById('add-member-picker').dataset.addUrl;
+  let timer;
+
+  inp.addEventListener('input', () => {
+    clearTimeout(timer);
+    const q = inp.value.trim();
+    if (q.length < 1) { resultsEl.style.display = 'none'; return; }
+    resultsEl.style.display = '';
+    resultsEl.innerHTML = '<div class="search-spinner"><i class="ph ph-circle-notch spin"></i></div>';
+    timer = setTimeout(() => {
+      fetch(`/collaboration/api/users/search/?q=${encodeURIComponent(q)}&group=${GROUP_PK}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.users.length) {
+            resultsEl.innerHTML = '<div class="search-spinner">No users found.</div>';
+            return;
+          }
+          resultsEl.innerHTML = data.users.map(u => `
+            <div class="search-result-item ${u.already_member ? 'already' : ''}"
+                 data-username="${u.username}" data-already="${u.already_member}">
+              <div class="user-avt user-avt-sm">${u.initial}</div>
+              <span class="search-result-name">${u.username}</span>
+              ${u.already_member ? '<span class="search-result-badge">Already member</span>' : '<i class="ph ph-plus-circle" style="color:var(--accent-teal)"></i>'}
+            </div>
+          `).join('');
+          // Bind click to add
+          resultsEl.querySelectorAll('.search-result-item:not(.already)').forEach(el => {
+            el.addEventListener('click', () => {
+              const form = document.createElement('form');
+              form.method = 'POST'; form.action = addUrl;
+              form.innerHTML = `<input type="hidden" name="csrfmiddlewaretoken" value="${CSRF}">
+                                <input type="hidden" name="username" value="${el.dataset.username}">`;
+              document.body.appendChild(form);
+              form.submit();
+            });
+          });
+        });
+    }, 280);
+  });
+
+  // Close on outside click
+  document.addEventListener('click', e => {
+    if (!inp.contains(e.target) && !resultsEl.contains(e.target)) resultsEl.style.display = 'none';
+  });
+})();
+
+
+// ══════════════════════════
+// GROUP CHAT — AJAX polling
+// ══════════════════════════
+let groupLastId = 0;
+const chatBox = document.getElementById('chat-box');
+const chatInput = document.getElementById('chat-input');
+// Set initial lastId from rendered messages
+chatBox.querySelectorAll('[data-msg-id]').forEach(el => {
+  groupLastId = Math.max(groupLastId, parseInt(el.dataset.msgId) || 0);
+});
+
+function appendGroupMsg(m) {
+  const empty = document.getElementById('group-chat-empty');
+  if (empty) empty.remove();
+  const isMe = m.is_me;
+  const row = document.createElement('div');
+  row.className = `msg-row ${isMe ? 'msg-row-me' : 'msg-row-them'}`;
+  row.dataset.msgId = m.id;
+  row.innerHTML = `
+    <div class="msg-avt">${m.sender_initial}</div>
+    <div>
+      ${!isMe ? `<div class="msg-name">${m.sender}</div>` : ''}
+      <div class="msg-bubble ${isMe ? 'me' : 'them'}">${m.content}</div>
+      <div class="msg-time">${m.timestamp}</div>
+    </div>`;
+  chatBox.appendChild(row);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  groupLastId = Math.max(groupLastId, m.id);
+}
+
+function pollGroupChat() {
+  fetch(`/collaboration/${GROUP_PK}/messages/api/?after=${groupLastId}`)
+    .then(r => r.json())
+    .then(data => { data.messages.forEach(appendGroupMsg); })
+    .catch(() => {});
+}
+setInterval(pollGroupChat, 3000);
+// Scroll to bottom on load
+chatBox.scrollTop = chatBox.scrollHeight;
+
+function sendGroupMessage(e) {
+  e.preventDefault();
+  const content = chatInput.value.trim();
+  if (!content) return;
+  chatInput.value = '';
+  fetch(`/collaboration/${GROUP_PK}/message/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `content=${encodeURIComponent(content)}`
+  }).then(() => pollGroupChat());
+}
+
+
+// ══════════════════════════
+// TASK CHAT
+// ══════════════════════════
+const taskLastIds = {};
+const taskPollers = {};
+
+function toggleTaskChat(taskPk) {
+  const panel = document.getElementById(`task-chat-${taskPk}`);
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : '';
+  if (!open) {
+    // Start polling when opened
+    if (!taskPollers[taskPk]) {
+      taskLastIds[taskPk] = 0;
+      // Init from existing rendered messages
+      const box = document.getElementById(`task-chat-box-${taskPk}`);
+      box.querySelectorAll('[data-msg-id]').forEach(el => {
+        taskLastIds[taskPk] = Math.max(taskLastIds[taskPk], parseInt(el.dataset.msgId) || 0);
+      });
+      box.scrollTop = box.scrollHeight;
+      taskPollers[taskPk] = setInterval(() => pollTaskChat(taskPk), 3000);
+    }
+  }
+}
+
+function pollTaskChat(taskPk) {
+  const lastId = taskLastIds[taskPk] || 0;
+  fetch(`/collaboration/${GROUP_PK}/task/${taskPk}/chat/api/?after=${lastId}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return;
+      data.messages.forEach(m => appendTaskMsg(taskPk, m));
+    }).catch(() => {});
+}
+
+function appendTaskMsg(taskPk, m) {
+  const box = document.getElementById(`task-chat-box-${taskPk}`);
+  if (!box) return;
+  const empty = box.querySelector('.chat-empty');
+  if (empty) empty.remove();
+  const isMe = m.sender === CURRENT_USER;
+  const row = document.createElement('div');
+  row.className = `msg-row ${isMe ? 'msg-row-me' : 'msg-row-them'}`;
+  row.dataset.msgId = m.id;
+  row.innerHTML = `
+    <div class="msg-avt">${m.sender_initial}</div>
+    <div>
+      ${!isMe ? `<div class="msg-name">${m.sender}</div>` : ''}
+      <div class="msg-bubble ${isMe ? 'me' : 'them'}">${m.content}</div>
+      <div class="msg-time">${m.timestamp}</div>
+    </div>`;
+  box.appendChild(row);
+  box.scrollTop = box.scrollHeight;
+  taskLastIds[taskPk] = Math.max(taskLastIds[taskPk] || 0, m.id);
+}
+
+function sendTaskMessage(e, taskPk, groupPk) {
+  e.preventDefault();
+  const inp = document.getElementById(`task-chat-input-${taskPk}`);
+  const content = inp.value.trim();
+  if (!content) return;
+  inp.value = '';
+  fetch(`/collaboration/${groupPk}/task/${taskPk}/chat/send/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `content=${encodeURIComponent(content)}`
+  }).then(() => pollTaskChat(taskPk));
+}
+
+
+// ══════════════════════════
+// EDIT TASK MODAL
+// ══════════════════════════
+function openEditModal(pk, title, desc, priority, status, deadline, assignedIds) {
+  document.getElementById('edit-title').value = title;
+  document.getElementById('edit-description').value = desc;
+  document.getElementById('edit-priority').value = priority;
+  document.getElementById('edit-status').value = status;
+  document.getElementById('edit-deadline').value = deadline;
+  document.getElementById('edit-task-form').action = `/collaboration/${GROUP_PK}/task/${pk}/edit/`;
+  // Set assignees in picker
+  const picker = document.getElementById('edit-user-picker');
+  if (picker && picker._setSelected) picker._setSelected(assignedIds);
+  document.getElementById('edit-task-modal').style.display = 'flex';
+}
+
+// Bind Task Checklist Creation Logic
+function bindSubtaskBuilder(inputId, btnId, containerId) {
+  const input = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  const container = document.getElementById(containerId);
+  if(!input || !btn || !container) return;
+
+  btn.addEventListener('click', () => {
+    const val = input.value.trim();
+    if(val) {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.gap = '8px';
+      row.innerHTML = `
+        <input type="text" name="checklist_new[]" class="form-control form-control-sm" value="${val}" style="flex:1;" readonly>
+        <button type="button" class="btn btn-sm btn-secondary" onclick="this.parentElement.remove()"><i class="ph ph-x"></i></button>
+      `;
+      container.appendChild(row);
+      input.value = '';
+    }
+  });
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') { e.preventDefault(); btn.click(); }
+  });
+}
+bindSubtaskBuilder('add-subtask-input', 'add-subtask-btn', 'add-subtask-container');
+bindSubtaskBuilder('edit-subtask-input', 'edit-subtask-btn', 'edit-subtask-container');
+
+// Bind Task Checklist Checkbox Toggling
+document.querySelectorAll('.task-checklist-toggle').forEach(chk => {
+  chk.addEventListener('change', (e) => {
+    const taskPk = chk.dataset.taskPk;
+    const itemPk = chk.dataset.itemPk;
+    const span = chk.closest('.custom-checkbox').querySelector('.checklist-text');
+    fetch(`/collaboration/${GROUP_PK}/task/${taskPk}/checklist/${itemPk}/toggle/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if(data.success) {
+        if(data.is_done) {
+          span.classList.add('is-done');
+        } else {
+          span.classList.remove('is-done');
+        }
+      } else {
+        chk.checked = !chk.checked; // revert
+      }
+    }).catch(() => chk.checked = !chk.checked);
+  });
+});
+
+function openEditModal(pk, title, desc, priority, status, deadline, assignedIds) {
+  document.getElementById('edit-title').value = title;
+  document.getElementById('edit-description').value = desc;
+  document.getElementById('edit-priority').value = priority;
+  document.getElementById('edit-status').value = status;
+  document.getElementById('edit-deadline').value = deadline;
+  document.getElementById('edit-task-form').action = `/collaboration/${GROUP_PK}/task/${pk}/edit/`;
+  // Set assignees in picker
+  const picker = document.getElementById('edit-user-picker');
+  if (picker && picker._setSelected) picker._setSelected(assignedIds);
+
+  // Fetch updated subtasks to populate the checklist container
+  const container = document.getElementById('edit-subtask-container');
+  container.innerHTML = '<div class="text-muted" style="font-size:0.8rem;">Loading...</div>';
+  fetch(`/collaboration/${GROUP_PK}/task/${pk}/edit/`)
+    .then(r => r.json())
+    .then(data => {
+      container.innerHTML = '';
+      if(data.checklist) {
+        data.checklist.forEach(item => {
+          const row = document.createElement('div');
+          row.style.display = 'flex';
+          row.style.gap = '8px';
+          row.innerHTML = `
+            <input type="text" name="checklist_existing_${item.id}" class="form-control form-control-sm" value="${item.content}" style="flex:1;">
+            <label style="display:flex; align-items:center; gap:4px; font-size:0.8rem; margin:0;"><input type="checkbox" name="checklist_delete_${item.id}"> Delete</label>
+          `;
+          container.appendChild(row);
+        });
+      }
+    });
+
+  document.getElementById('edit-task-modal').style.display = 'flex';
+}
+
+// Bind edit buttons
+document.querySelectorAll('.edit-task-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const assignedIds = btn.dataset.assigned ? btn.dataset.assigned.split(',').map(Number) : [];
+    openEditModal(
+      btn.dataset.pk,
+      btn.dataset.title,
+      btn.dataset.desc,
+      btn.dataset.priority,
+      btn.dataset.status,
+      btn.dataset.taskDeadline,
+      assignedIds
+    );
+  });
+});
+
+// Bind task chat toggles
+document.querySelectorAll('.toggle-chat-btn').forEach(btn => {
+  btn.addEventListener('click', () => toggleTaskChat(btn.dataset.pk));
+});
+
+// Bind task chat submission
+document.querySelectorAll('.js-task-chat-form').forEach(form => {
+  form.addEventListener('submit', (e) => {
+    sendTaskMessage(e, form.dataset.taskPk, form.dataset.groupPk);
+  });
+});
+
+function closeEditModal(e) {
+  if (e && e.target !== document.getElementById('edit-task-modal')) return;
+  document.getElementById('edit-task-modal').style.display = 'none';
+}
+
+// Allow Escape key to close modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('edit-task-modal').style.display = 'none';
+    document.getElementById('delete-group-modal').style.display = 'none';
+  }
+});
+
+
+// ══════════════════════════
+// DELETE GROUP MODAL
+// ══════════════════════════
+const deleteGroupBtn = document.getElementById('delete-group-btn');
+if (deleteGroupBtn) {
+  deleteGroupBtn.addEventListener('click', () => {
+    document.getElementById('delete-group-modal').style.display = 'flex';
+  });
+}
+
+function closeDeleteGroupModal(e) {
+  if (e && e.target !== document.getElementById('delete-group-modal')) return;
+  document.getElementById('delete-group-modal').style.display = 'none';
+}
+
+
+// ══════════════════════════
+// DELETE TASK confirm
+// ══════════════════════════
+document.querySelectorAll('.delete-task-form').forEach(form => {
+  form.addEventListener('submit', e => {
+    if (!confirm(`Delete task "${form.closest('.task-card').querySelector('.task-title').textContent.trim()}"?`)) {
+      e.preventDefault();
+    }
+  });
+});
+</script>
+{% endblock %}

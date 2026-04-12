@@ -1,0 +1,362 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AcadConnect — Your Student Hub</title>
+  <meta name="description" content="All-in-one college productivity and lifestyle companion for students.">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <link rel="stylesheet" href="{% static 'css/features.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap"
+    rel="stylesheet">
+  <link rel="icon" href="{% static 'images/gra.png' %}">
+</head>
+
+<body>
+
+  <canvas id="bg-canvas"
+    style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+
+  <div class="lp-wrap">
+
+    <!-- NAV -->
+    <nav class="lp-nav" id="lp-nav">
+      <div class="lp-nav-inner">
+        <a href="{% url 'accounts:landing' %}" class="lp-brand"><i class="ph ph-graduation-cap"></i> <span>AcadConnect</span></a>
+        <div class="lp-nav-links">
+          <a href="#why">Why It Matters</a>
+          <a href="#features">Features</a>
+          <a href="#how">How It Works</a>
+        </div>
+        <div class="lp-nav-cta">
+          <a href="{% url 'accounts:login' %}" class="lp-btn-ghost">Sign In</a>
+          <a href="{% url 'accounts:register' %}" class="lp-btn-solid">Get Started Free</a>
+        </div>
+        <button class="lp-theme-toggle" id="lp-theme-toggle" aria-label="Toggle theme">
+          <i class="ph ph-sun" id="lp-theme-icon"></i>
+        </button>
+        <button class="lp-hamburger" id="lp-hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <div class="lp-mobile-menu" id="lp-mobile-menu">
+        <a href="#why">Why It Matters</a>
+        <a href="#features">Features</a>
+        <a href="#how">How It Works</a>
+        <a href="{% url 'accounts:login' %}">Sign In</a>
+        <a href="{% url 'accounts:register' %}" class="lp-btn-solid" style="text-align:center;margin-top:8px;">Get
+          Started Free</a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="lp-hero">
+      <div class="lp-hero-badge reveal"><i class="ph ph-asterisk"></i> Built for college students everywhere</div>
+      <h1 class="lp-hero-title reveal reveal-delay-1">
+        Your campus life,<br><em>finally organized.</em>
+      </h1>
+      <p class="lp-hero-sub reveal reveal-delay-2">
+        Tasks, schedules, grades, habits, and wellness — all in one place.<br>Built to help you thrive, not just
+        survive, college life.
+      </p>
+      <div class="lp-hero-actions reveal reveal-delay-3">
+        <a href="{% url 'accounts:register' %}" class="lp-btn-solid lp-btn-lg">Get Started Free <i
+            class="ph ph-arrow-right"></i></a>
+        <a href="{% url 'accounts:login' %}" class="lp-btn-ghost lp-btn-lg">Sign In →</a>
+      </div>
+      <div class="lp-hero-stats reveal reveal-delay-4">
+        <div class="lp-stat"><span class="lp-stat-num">8+</span><span class="lp-stat-label">Smart Tools</span></div>
+        <div class="lp-stat-divider"></div>
+        <div class="lp-stat"><span class="lp-stat-num">100%</span><span class="lp-stat-label">Free to use</span></div>
+        <div class="lp-stat-divider"></div>
+        <div class="lp-stat"><span class="lp-stat-num">AI</span><span class="lp-stat-label">Powered Insights</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHY IT MATTERS -->
+    <section class="lp-section" id="why">
+      <div class="lp-section-inner lp-two-col">
+        <div class="lp-col-text reveal">
+          <p class="lp-eyebrow">Why It Matters</p>
+          <h2 class="lp-section-title">College is overwhelming.<br>It doesn't have to be.</h2>
+          <p class="lp-section-body">Most students juggle 5+ apps just to stay afloat — one for tasks, one for
+            schedules, another for grades. AcadConnect brings everything together so you can focus on what
+            actually matters: learning and living.</p>
+          <ul class="lp-check-list">
+            <li><i class="ph ph-check-circle"></i> One place for all your academic needs</li>
+            <li><i class="ph ph-check-circle"></i> AI that learns your patterns and helps you improve</li>
+            <li><i class="ph ph-check-circle"></i> Built around student wellness, not just productivity</li>
+          </ul>
+          <a href="{% url 'accounts:register' %}" class="lp-btn-solid"
+            style="margin-top:28px;display:inline-flex;">Learn More <i class="ph ph-arrow-right"></i></a>
+        </div>
+        <div class="lp-col-visual reveal reveal-delay-1">
+          <div class="lp-visual-card">
+            <div class="lp-vc-header">
+              <span class="lp-vc-dot" style="background:#ff5f57"></span>
+              <span class="lp-vc-dot" style="background:#ffbd2e"></span>
+              <span class="lp-vc-dot" style="background:#28c840"></span>
+              <span style="margin-left:10px;font-size:0.72rem;color:rgba(200,224,239,0.4);">companion · dashboard</span>
+            </div>
+            <div class="lp-vc-body">
+              <div class="lp-vc-stat-row">
+                <div class="lp-vc-stat" style="background:rgba(42,157,143,0.15);border-color:rgba(42,157,143,0.3);">
+                  <i class="ph ph-graduation-cap" style="color:#2A9D8F;font-size:1.3rem;"></i>
+                  <div><span class="big" style="color:#A8DADC;">3.8</span><span class="small">GPA</span></div>
+                </div>
+                <div class="lp-vc-stat" style="background:rgba(224,122,95,0.15);border-color:rgba(224,122,95,0.3);">
+                  <i class="ph ph-fire" style="color:#E07A5F;font-size:1.3rem;"></i>
+                  <div><span class="big" style="color:#f0a080;">12</span><span class="small">Day streak</span></div>
+                </div>
+                <div class="lp-vc-stat" style="background:rgba(233,196,106,0.15);border-color:rgba(233,196,106,0.3);">
+                  <i class="ph ph-check-square" style="color:#E9C46A;font-size:1.3rem;"></i>
+                  <div><span class="big" style="color:#E9C46A;">5/7</span><span class="small">Tasks</span></div>
+                </div>
+              </div>
+              <div class="lp-vc-task"><span class="lp-vc-task-dot" style="background:#2A9D8F;"></span><span>Math
+                  Assignment</span><span class="lp-vc-task-badge"
+                  style="background:rgba(42,157,143,0.15);color:#A8DADC;">Due today</span></div>
+              <div class="lp-vc-task"><span class="lp-vc-task-dot" style="background:#E07A5F;"></span><span>History
+                  Essay</span><span class="lp-vc-task-badge" style="background:rgba(224,122,95,0.15);color:#E07A5F;">2
+                  days left</span></div>
+              <div class="lp-vc-task"><span class="lp-vc-task-dot" style="background:#52B788;"></span><span>Study Group
+                  — Rm 204</span><span class="lp-vc-task-badge"
+                  style="background:rgba(82,183,136,0.15);color:#52B788;">✓ Done</span></div>
+              <div class="lp-vc-progress">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                  <span style="font-size:0.72rem;color:rgba(200,224,239,0.5);">Weekly goal progress</span>
+                  <span style="font-size:0.72rem;color:#A8DADC;font-weight:600;">71%</span>
+                </div>
+                <div class="lp-vc-bar">
+                  <div class="lp-vc-bar-fill" style="width:71%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PEOPLE TRUST IT -->
+    <section class="lp-section lp-section-alt" id="trust">
+      <div class="lp-section-inner lp-two-col lp-reverse">
+        <div class="lp-col-visual reveal">
+          <div class="lp-trust-grid">
+            <div class="lp-trust-card reveal"><i class="ph ph-shield-check"></i>
+              <h4>Your data stays yours</h4>
+              <p>We never sell your information. Period.</p>
+            </div>
+            <div class="lp-trust-card reveal reveal-delay-1"><i class="ph ph-lock-key"></i>
+              <h4>Secure by design</h4>
+              <p>Django's battle-tested security keeps your account safe.</p>
+            </div>
+            <div class="lp-trust-card reveal reveal-delay-2"><i class="ph ph-device-mobile"></i>
+              <h4>Works on any device</h4>
+              <p>Fully responsive — phone, tablet, or laptop.</p>
+            </div>
+            <div class="lp-trust-card reveal reveal-delay-3"><i class="ph ph-wifi-high"></i>
+              <h4>Always available</h4>
+              <p>Access your hub anytime, anywhere you need it.</p>
+            </div>
+          </div>
+        </div>
+        <div class="lp-col-text reveal reveal-delay-1">
+          <p class="lp-eyebrow">Why People Trust It</p>
+          <h2 class="lp-section-title">Designed with<br>your privacy in mind.</h2>
+          <p class="lp-section-body">You are in control. AcadConnect is made for you — your academic data, your
+            wellness logs, your goals. Not even our team can access your personal information without your knowledge.
+          </p>
+          <p class="lp-section-body" style="margin-top:12px;">AcadConnect is actively maintained and designed to
+            stay out of your way — while keeping you on track.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="lp-section lp-section-dark" id="features">
+      <div class="lp-section-inner">
+        <div class="lp-section-head reveal">
+          <p class="lp-eyebrow">Everything You Need</p>
+          <h2 class="lp-section-title">8 powerful tools.<br>One smart hub.</h2>
+          <p class="lp-section-sub">Click any feature to get started — you'll be taken to sign in first.</p>
+        </div>
+        <div class="landing-features">
+          <a href="{% url 'accounts:login' %}" class="feature-pill reveal">
+            <div class="feature-pill-icon"><i class="ph ph-brain"></i></div>
+            <div class="feature-pill-text">Smart Task Tracker with Auto-Priority</div>
+            <div class="feature-pill-hint">Sign in to access →</div>
+          </a>
+          <a href="{% url 'accounts:login' %}" class="feature-pill reveal reveal-delay-1">
+            <div class="feature-pill-icon"><i class="ph ph-calendar-check"></i></div>
+            <div class="feature-pill-text">Interactive Schedule Planner</div>
+            <div class="feature-pill-hint">Sign in to access →</div>
+          </a>
+          <a href="{% url 'accounts:login' %}" class="feature-pill reveal reveal-delay-2">
+            <div class="feature-pill-icon"><i class="ph ph-chart-line-up"></i></div>
+            <div class="feature-pill-text">GPA Monitoring & Prediction</div>
+            <div class="feature-pill-hint">Sign in to access →</div>
+          </a>
+          <a href="{% url 'accounts:login' %}" class="feature-pill reveal reveal-delay-3">
+            <div class="feature-pill-icon"><i class="ph ph-barbell"></i></div>
+            <div class="feature-pill-text">Habit & Goal Tracker with Streaks</div>
+            <div class="feature-pill-hint">Sign in to access →</div>
+          </a>
+          <a href="{% url 'accounts:login' %}" class="feature-pill reveal">
+            <div class="feature-pill-icon"><i class="ph ph-heartbeat"></i></div>
+            <div class="feature-pill-text">Wellness Hub & Stress Tracking</div>
+            <div class="feature-pill-hint">Sign in to access →</div>
+          </a>
+          <a href="{% url 'accounts:login' %}" class="feature-pill reveal reveal-delay-1">
+            <div class="feature-pill-icon"><i class="ph ph-users-four"></i></div>
+            <div class="feature-pill-text">Group Collaboration Tools</div>
+            <div class="feature-pill-hint">Sign in to access →</div>
+          </a>
+          <a href="{% url 'accounts:login' %}" class="feature-pill reveal reveal-delay-2">
+            <div class="feature-pill-icon"><i class="ph ph-bell-ringing"></i></div>
+            <div class="feature-pill-text">Smart Notifications & Reminders</div>
+            <div class="feature-pill-hint">Sign in to access →</div>
+          </a>
+          <a href="{% url 'accounts:login' %}" class="feature-pill reveal reveal-delay-3">
+            <div class="feature-pill-icon"><i class="ph ph-robot"></i></div>
+            <div class="feature-pill-text">AI-Powered Insights & Tips</div>
+            <div class="feature-pill-hint">Sign in to access →</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="lp-section" id="how">
+      <div class="lp-section-inner">
+        <div class="lp-section-head reveal">
+          <p class="lp-eyebrow">How To Get Started</p>
+          <h2 class="lp-section-title">Up and running<br>in 3 simple steps.</h2>
+        </div>
+        <div class="lp-steps">
+          <div class="lp-step reveal">
+            <div class="lp-step-num">01</div>
+            <div class="lp-step-icon"><i class="ph ph-user-plus"></i></div>
+            <h3>Create Your Account</h3>
+            <p>Sign up for free in under a minute. No credit card, no catch — just your student email.</p>
+            <a href="{% url 'accounts:register' %}" class="lp-step-link">Sign up free <i
+                class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="lp-step-arrow reveal reveal-delay-1"><i class="ph ph-arrow-right"></i></div>
+          <div class="lp-step reveal reveal-delay-1">
+            <div class="lp-step-num">02</div>
+            <div class="lp-step-icon"><i class="ph ph-sliders"></i></div>
+            <h3>Set Up Your Hub</h3>
+            <p>Add your classes, goals, and daily habits. Takes 2 minutes to personalize your dashboard.</p>
+          </div>
+          <div class="lp-step-arrow reveal reveal-delay-2"><i class="ph ph-arrow-right"></i></div>
+          <div class="lp-step reveal reveal-delay-2">
+            <div class="lp-step-num">03</div>
+            <div class="lp-step-icon"><i class="ph ph-rocket-launch"></i></div>
+            <h3>Thrive</h3>
+            <p>Let AI track your progress, surface insights, and keep you on track all semester long.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA BANNER -->
+    <section class="lp-cta reveal">
+      <div class="lp-cta-inner">
+        <h2>Now you're getting <span class="lp-cta-underline">real value</span><br>from your college life.</h2>
+        <p>Join students who are already thriving with AcadConnect.</p>
+        <a href="{% url 'accounts:register' %}" class="lp-btn-solid lp-btn-lg">Get Started Free <i
+            class="ph ph-arrow-right"></i></a>
+      </div>
+    </section>
+
+    <!-- ── FOOTER  ── -->
+    <footer class="lp-footer">
+      <div class="lp-footer-inner">
+
+        <!-- Brand col -->
+        <div class="lp-footer-brand">
+          <a href="#" class="lp-footer-logo"><i class="ph ph-graduation-cap"></i><span>AcadConnect</span></a>
+          <p class="lp-footer-tagline">Your all-in-one student hub for tasks, schedules, grades, habits, and wellness.
+            Built to help you thrive.</p>
+        </div>
+
+        <!-- Features col -->
+        <div class="lp-footer-col">
+          <h5>Features</h5>
+          <a href="{% url 'accounts:login' %}">Smart Task Tracker</a>
+          <a href="{% url 'accounts:login' %}">Schedule Planner</a>
+          <a href="{% url 'accounts:login' %}">GPA Monitoring</a>
+          <a href="{% url 'accounts:login' %}">Habit Tracker</a>
+          <a href="{% url 'accounts:login' %}">Wellness Hub</a>
+        </div>
+
+        <!-- Account col -->
+        <div class="lp-footer-col">
+          <h5>Account</h5>
+          <a href="{% url 'accounts:register' %}">Get Started Free</a>
+          <a href="{% url 'accounts:login' %}">Sign In</a>
+        </div>
+
+      </div>
+
+      <div class="lp-footer-bottom">
+        <span class="lp-footer-copy">© 2026 AcadConnect. All rights reserved.</span>
+        <span class="lp-footer-heart">Built with <span><i class="ph ph-heart"></i></span> for college students
+          everywhere.</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="{% static 'js/main.js' %}"></script>
+  <script src="{% static 'js/backgroundwaves.js' %}"></script>
+  <script>
+    // Scroll reveal
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); obs.unobserve(e.target); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+    // Sticky nav
+    window.addEventListener('scroll', () => {
+      document.getElementById('lp-nav').classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); document.getElementById('lp-mobile-menu').classList.remove('open'); }
+      });
+    });
+
+    // Hamburger
+    document.getElementById('lp-hamburger').addEventListener('click', () => {
+      document.getElementById('lp-mobile-menu').classList.toggle('open');
+    });
+
+    // ── Dark / Light mode toggle ─────────────────────────────────────────────────
+    const themeToggle = document.getElementById('lp-theme-toggle');
+    const themeIcon = document.getElementById('lp-theme-icon');
+
+    // Load saved preference or default to dark
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    themeIcon.className = savedTheme === 'dark' ? 'ph ph-sun' : 'ph ph-moon';
+
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      themeIcon.className = next === 'dark' ? 'ph ph-sun' : 'ph ph-moon';
+    });
+  </script>
+</body>
+
+</html>

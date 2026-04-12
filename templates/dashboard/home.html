@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ── Welcome banner ── -->
+<div class="dash-welcome">
+  <div>
+    <p class="dash-welcome-sub">Good to see you back,</p>
+    <h2 class="dash-welcome-name">{{ request.user.full_name }} 👋</h2>
+  </div>
+  <div class="dash-date">
+    <i class="ph ph-calendar-blank"></i>
+    <span id="dash-live-date"></span>
+  </div>
+</div>
+
+<!-- ── Stat Cards ── -->
+<div class="grid grid-4 mb-24">
+  <div class="stat-card">
+    <div class="stat-icon bg-coral-soft"><i class="ph ph-warning-octagon"></i></div>
+    <div>
+      <div class="stat-value text-coral">{{ overdue_count }}</div>
+      <div class="stat-label">Overdue</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-gold-soft"><i class="ph ph-alarm"></i></div>
+    <div>
+      <div class="stat-value text-gold">{{ due_today }}</div>
+      <div class="stat-label">Due Today</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-teal-soft"><i class="ph ph-graduation-cap"></i></div>
+    <div>
+      <div class="stat-value text-teal">{{ current_gpa|default:"—" }}</div>
+      <div class="stat-label">Current GPA</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-green-soft"><i class="ph ph-fire"></i></div>
+    <div>
+      <div class="stat-value text-green">{{ habits_completed_today }}/{{ total_habits }}</div>
+      <div class="stat-label">Habits Today</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Two-column layout ── -->
+<div class="grid grid-2 gap-20">
+
+  <!-- LEFT column -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    {% if quote %}
+    <div class="quote-card">
+      <p class="quote-text">{{ quote.text }}</p>
+      {% if quote.author %}<p class="quote-author">— {{ quote.author }}</p>{% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Smart Tip -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-robot"></i> Smart Tip</span>
+      </div>
+      <p style="font-size:0.9rem;line-height:1.75;color:var(--text-secondary);">{{ tip }}</p>
+    </div>
+
+    <!-- Priority Tasks -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-check-square"></i> Priority Tasks</span>
+        <a href="{% url 'tasks:list' %}" class="btn btn-secondary btn-sm">View All</a>
+      </div>
+      {% if smart_tasks %}
+        {% for task in smart_tasks %}
+        <div class="task-card">
+          <div class="task-dot"></div>
+          <div class="task-info">
+            <div class="task-title">{{ task.title }}</div>
+            <div class="task-meta">
+              {% if task.subject %}<span class="subject-tag">{{ task.subject.name }}</span>{% endif %}
+              <span class="badge badge-gray">P{{ task.priority }}</span>
+              <span class="task-countdown {% if task.urgency_score >= 7 %}urgent{% endif %}"
+                    data-deadline="{{ task.deadline|date:'c' }}">{{ task.time_remaining_display }}</span>
+            </div>
+          </div>
+          <div class="task-actions">
+            <a href="{% url 'tasks:complete' task.pk %}" class="btn btn-sm btn-secondary btn-icon" title="Done">
+              <i class="ph ph-check"></i>
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <i class="ph ph-confetti"></i>
+          <p>All clear — no pending tasks!</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- RIGHT column -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    {% if suggestions %}
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-clock"></i> Free Time Today</span>
+        <a href="{% url 'schedule:free_time' %}" class="btn btn-secondary btn-sm">Details</a>
+      </div>
+      {% for s in suggestions %}
+      <div class="free-slot-item">
+        <div class="free-slot-icon bg-{% if s.type == 'study' %}teal{% else %}green{% endif %}-soft">
+          <i class="ph ph-{% if s.type == 'study' %}books{% else %}coffee{% endif %}"></i>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:2px;">
+            {{ s.slot.start|date:"g:i A" }} – {{ s.slot.end|date:"g:i A" }}
+            <span class="badge badge-gray" style="margin-left:5px;">{{ s.slot.duration_minutes }}min</span>
+          </div>
+          <div style="font-weight:600;font-size:0.875rem;">{{ s.activity }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Habits -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-fire"></i> Today's Habits</span>
+        <a href="{% url 'habits:habits' %}" class="btn btn-secondary btn-sm">Manage</a>
+      </div>
+      {% if habits %}
+        {% for habit in habits %}
+        <div class="habit-item">
+          <a href="{% url 'habits:habit_check' habit.pk %}" class="habit-check" title="Toggle">
+            <i class="ph ph-check" style="font-size:0.8rem;"></i>
+          </a>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:0.875rem;">{{ habit.name }}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted);">{{ habit.get_category_display }}</div>
+          </div>
+          <div class="habit-streak"><i class="ph ph-fire"></i> {{ habit.current_streak }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted" style="font-size:0.875rem;padding:8px 0;">
+          No habits yet. <a href="{% url 'habits:habits' %}">Add one →</a>
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Grades -->
+    {% if courses %}
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-chart-line-up"></i> Grades Overview</span>
+        <a href="{% url 'grades:dashboard' %}" class="btn btn-secondary btn-sm">Details</a>
+      </div>
+      {% for course in courses %}
+      {% if course.computed_grade %}
+      <div style="margin-bottom:16px;">
+        <div class="flex-between mb-4">
+          <span style="font-size:0.875rem;font-weight:600;">{{ course.name }}</span>
+          <span class="badge {% if course.computed_grade >= 90 %}badge-green{% elif course.computed_grade >= 75 %}badge-teal{% elif course.computed_grade >= 60 %}badge-gold{% else %}badge-coral{% endif %}">
+            {{ course.letter_grade }} · {{ course.computed_grade|floatformat:1 }}%
+          </span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill {% if course.computed_grade >= 90 %}progress-excellent{% elif course.computed_grade >= 75 %}progress-good{% elif course.computed_grade >= 60 %}progress-fair{% else %}progress-poor{% endif %}"
+               data-progress="{{ course.computed_grade }}%"></div>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<style>
+/* Dashboard-specific enhancements */
+.dash-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 26px;
+  padding: 22px 26px;
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.dash-welcome-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+.dash-welcome-name {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.dash-date {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.855rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  background: var(--glass-bg);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+.dash-date i { color: var(--accent-teal); }
+
+.free-slot-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.free-slot-item:last-child { border-bottom: none; }
+.free-slot-icon {
+  width: 38px; height: 38px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+}
+.empty-state i {
+  font-size: 2.8rem;
+  color: var(--accent-teal);
+  display: block;
+  margin-bottom: 10px;
+}
+.empty-state p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live date in welcome bar
+const dateEl = document.getElementById('dash-live-date');
+if (dateEl) {
+  const now = new Date();
+  dateEl.textContent = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+}
+</script>
+{% endblock %}

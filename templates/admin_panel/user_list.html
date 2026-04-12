@@ -1,0 +1,303 @@
+{% extends 'admin_panel/admin_base.html' %}
+{% block title %}User Management{% endblock %}
+{% block page_title %}User Management{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div class="flex-between mb-22">
+  <div>
+    <h2 class="page-title"><i class="ph ph-shield-check"></i> User Management</h2>
+    <p class="page-subtitle">Manage, search, and control all student accounts.</p>
+  </div>
+</div>
+
+<!-- ── Stats row ── -->
+<div class="grid grid-4 mb-20">
+  <div class="stat-card">
+    <div class="stat-icon bg-teal-soft"><i class="ph ph-users"></i></div>
+    <div>
+      <div class="stat-value text-teal">{{ total }}</div>
+      <div class="stat-label">Total Users</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-green-soft"><i class="ph ph-check-circle"></i></div>
+    <div>
+      <div class="stat-value text-green">{{ active_count }}</div>
+      <div class="stat-label">Active</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-coral-soft"><i class="ph ph-prohibit"></i></div>
+    <div>
+      <div class="stat-value text-coral">{{ suspended_count }}</div>
+      <div class="stat-label">Suspended</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-gold-soft"><i class="ph ph-envelope-simple-open"></i></div>
+    <div>
+      <div class="stat-value text-gold">{{ unverified_count }}</div>
+      <div class="stat-label">Unverified</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Filters ── -->
+<div class="card form-glass mb-20">
+  <form method="get" class="flex gap-14 flex-wrap" style="align-items:flex-end;">
+    <div class="form-group mb-0" style="flex:1;min-width:220px;">
+      <label class="form-label">Search</label>
+      <div style="position:relative;">
+        <i class="ph ph-magnifying-glass" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Name, username or email…" style="padding-left:36px;" id="user-search-input">
+      </div>
+    </div>
+    <div class="form-group mb-0">
+      <label class="form-label">Role</label>
+      <select name="role" class="form-control" onchange="this.form.submit()">
+        <option value="">All Roles</option>
+        {% for val, label in role_choices %}
+        <option value="{{ val }}" {% if role_filter == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group mb-0">
+      <label class="form-label">Status</label>
+      <select name="status" class="form-control" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+        <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspended</option>
+        <option value="unverified" {% if status_filter == 'unverified' %}selected{% endif %}>Unverified</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-bottom:0;">
+      <i class="ph ph-magnifying-glass"></i> Search
+    </button>
+    {% if q or role_filter or status_filter %}
+    <a href="{% url 'admin_panel:user_list' %}" class="btn btn-secondary" style="margin-bottom:0;">
+      <i class="ph ph-x"></i> Clear
+    </a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- ── User table ── -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="ph ph-list-bullets"></i> Users</span>
+    <span class="badge badge-teal">{{ users|length }} result{{ users|length|pluralize }}</span>
+  </div>
+
+  {% if users %}
+  <div class="admin-table-wrapper">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Last Login</th>
+          <th>Joined</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr class="{% if not u.is_active %}row-suspended{% endif %}">
+          <!-- Avatar + name -->
+          <td>
+            <div class="user-row">
+              <div class="user-avt user-avt-sm">
+                {% if u.profile_photo %}
+                <img src="{{ u.profile_photo.url }}" alt="{{ u.username }}">
+                {% else %}
+                {{ u.username|first|upper }}
+                {% endif %}
+              </div>
+              <div>
+                <div class="user-row-name">{{ u.full_name }}</div>
+                <div class="user-row-sub">@{{ u.username }}</div>
+              </div>
+            </div>
+          </td>
+          <!-- Email + verified badge -->
+          <td>
+            <span class="user-email">{{ u.email }}</span>
+            {% if not u.is_email_verified %}
+            <span class="badge badge-gold" style="margin-left:6px;font-size:0.65rem;">Unverified</span>
+            {% endif %}
+          </td>
+          <!-- Role -->
+          <td>
+            <span class="badge {% if u.role == 'admin' %}badge-coral{% elif u.role == 'professor' %}badge-teal{% else %}badge-gray{% endif %}">
+              {{ u.get_role_display }}
+            </span>
+          </td>
+          <!-- Status -->
+          <td>
+            {% if u.is_active %}
+            <span class="badge badge-green"><i class="ph ph-check"></i> Active</span>
+            {% else %}
+            <span class="badge badge-coral"><i class="ph ph-prohibit"></i> Suspended</span>
+            {% endif %}
+          </td>
+          <!-- Last login -->
+          <td class="text-muted" style="font-size:0.8rem;">
+            {% if u.last_login %}
+            {{ u.last_login|date:"M j, Y" }}<br>
+            <span style="font-size:0.72rem;color:var(--text-muted);">{{ u.last_login|time:"g:i A" }}</span>
+            {% else %}
+            <span style="color:var(--text-muted);">Never</span>
+            {% endif %}
+          </td>
+          <!-- Joined -->
+          <td class="text-muted" style="font-size:0.8rem;">{{ u.date_joined|date:"M j, Y" }}</td>
+          <!-- Actions -->
+          <td>
+            <div class="action-group">
+              <!-- Edit -->
+              <a href="{% url 'admin_panel:user_edit' u.pk %}" class="btn btn-sm btn-secondary btn-icon" title="Edit user">
+                <i class="ph ph-pencil-simple"></i>
+              </a>
+              <!-- Approve (unverified only) -->
+              {% if not u.is_email_verified %}
+              <form method="post" action="{% url 'admin_panel:user_approve' u.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-icon" style="background:var(--accent-gold);color:#fff;" title="Approve & verify email">
+                  <i class="ph ph-check-circle"></i>
+                </button>
+              </form>
+              {% endif %}
+              <!-- Reset password -->
+              <form method="post" action="{% url 'admin_panel:user_reset_password' u.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-secondary btn-icon" title="Send password reset email"
+                  onclick="return confirm('Send password reset email to {{ u.email }}?')">
+                  <i class="ph ph-lock-key"></i>
+                </button>
+              </form>
+              <!-- Suspend / Unsuspend -->
+              {% if u != request.user %}
+              <form method="post" action="{% url 'admin_panel:user_suspend' u.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit"
+                  class="btn btn-sm btn-icon {% if u.is_active %}btn-secondary{% else %}btn-icon-gold{% endif %}"
+                  title="{% if u.is_active %}Suspend{% else %}Unsuspend{% endif %} user"
+                  onclick="return confirm('{% if u.is_active %}Suspend{% else %}Unsuspend{% endif %} {{ u.username }}?')">
+                  <i class="ph ph-{% if u.is_active %}prohibit{% else %}arrow-counter-clockwise{% endif %}"></i>
+                </button>
+              </form>
+              <!-- Delete -->
+              <form method="post" action="{% url 'admin_panel:user_delete' u.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger btn-icon" title="Delete user permanently"
+                  onclick="return confirm('Permanently delete {{ u.username }}? This cannot be undone.')">
+                  <i class="ph ph-trash"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card text-center" style="padding:52px 20px;box-shadow:none;border:none;">
+    <i class="ph ph-users-three" style="font-size:3rem;color:var(--accent-teal);display:block;margin-bottom:14px;"></i>
+    <h3 style="margin-bottom:8px;font-size:1.1rem;">No users found</h3>
+    <p class="text-muted">Try adjusting your search or filters.</p>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .mb-22 { margin-bottom: 22px; }
+  .gap-14 { gap: 14px; }
+
+  /* Table wrapper */
+  .admin-table-wrapper {
+    overflow-x: auto;
+    margin: 0 -1px;
+  }
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .admin-table thead tr {
+    border-bottom: 2px solid var(--border-color);
+  }
+  .admin-table th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+  }
+  .admin-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+  }
+  .admin-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .admin-table tbody tr:hover {
+    background: var(--glass-bg);
+  }
+  .row-suspended {
+    opacity: 0.6;
+  }
+
+  /* User cell */
+  .user-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .user-avt-sm {
+    width: 36px;
+    height: 36px;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+  .user-row-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+  }
+  .user-row-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .user-email {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+
+  /* Action buttons */
+  .action-group {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .btn-icon-gold {
+    background: var(--accent-gold);
+    color: #fff;
+    border: none;
+  }
+  .btn-icon-gold:hover {
+    opacity: 0.85;
+  }
+</style>
+{% endblock %}

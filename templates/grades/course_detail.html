@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}{{ course.name }}{% endblock %}
+{% block page_title %}{{ course.name }}{% endblock %}
+
+{% block content %}
+<div class="flex-between mb-20">
+  <div>
+    <h2 class="page-title"><i class="ph ph-book-open"></i> {{ course.name }}</h2>
+    <p class="page-subtitle">
+      {{ course.code }} · {{ course.credit_hours }} credits
+      {% if course.professor %} · <i class="ph ph-chalkboard-teacher"></i> {{ course.professor }}{% endif %}
+    </p>
+  </div>
+  <div class="flex gap-8">
+    <a href="{% url 'grades:assessment_add' course.pk %}" class="btn btn-primary btn-sm">
+      <i class="ph ph-plus"></i> Add Grade
+    </a>
+    <a href="{% url 'grades:dashboard' %}" class="btn btn-secondary btn-sm">
+      <i class="ph ph-arrow-left"></i> Back
+    </a>
+  </div>
+</div>
+
+<div class="grid grid-2 gap-20">
+  <!-- Grade summary -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-chart-pie"></i> Overall Grade</span>
+    </div>
+    <div class="gpa-display">
+      <div class="gpa-number{% if course.computed_grade and course.computed_grade < 70 %} gpa-number-at-risk{% endif %}">
+        {% if course.computed_grade %}{{ course.computed_grade|floatformat:1 }}%{% else %}—{% endif %}
+      </div>
+      <div class="gpa-label">{{ course.letter_grade }} Grade</div>
+    </div>
+    {% if course.computed_grade %}
+    <div class="progress-bar mt-8">
+      <div class="progress-fill {% if course.computed_grade >= 90 %}progress-excellent{% elif course.computed_grade >= 75 %}progress-good{% elif course.computed_grade >= 60 %}progress-fair{% else %}progress-poor{% endif %}"
+           data-progress="{{ course.computed_grade }}%"></div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Assessments -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-clipboard-text"></i> Assessments</span>
+      <span class="badge badge-teal">{{ assessments|length }}</span>
+    </div>
+    {% for a in assessments %}
+    <div class="assessment-row" style="padding:11px 0;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:0.875rem;">{{ a.name }}</div>
+        <div style="font-size:0.73rem;color:var(--text-muted);">
+          {{ a.get_assessment_type_display }} · {{ a.date|date:"M j, Y" }}
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-weight:700;font-size:0.95rem;color:var(--accent-teal);">{{ a.score }}/{{ a.max_score }}</div>
+        <div style="font-size:0.73rem;color:var(--text-muted);">{{ a.percentage|floatformat:1 }}%</div>
+      </div>
+      <div class="assessment-actions" style="display:flex;gap:4px;flex-shrink:0;">
+        <a href="{% url 'grades:assessment_edit' a.pk %}"
+           class="btn btn-secondary btn-sm"
+           style="padding:4px 8px;font-size:0.72rem;"
+           title="Edit assessment">
+          <i class="ph ph-pencil"></i>
+        </a>
+        <form method="post" action="{% url 'grades:assessment_delete' a.pk %}" style="display:inline;" onsubmit="return confirm('Delete {{ a.name }}? This cannot be undone.');">
+          {% csrf_token %}
+          <button type="submit"
+                  class="btn btn-sm"
+                  style="padding:4px 8px;font-size:0.72rem;background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);"
+                  title="Delete assessment">
+            <i class="ph ph-trash"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <p class="text-muted" style="font-size:0.875rem;padding:12px 0;">No assessments yet. Add your first grade above.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

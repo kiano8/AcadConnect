@@ -1,0 +1,95 @@
+﻿{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notification Center{% endblock %}
+
+{% block content %}
+<div class="grid grid-2 gap-20" style="align-items:start;">
+  <!-- Notifications -->
+  <div>
+    <div class="flex-between mb-16">
+      <h2 class="page-title" style="margin-bottom:0;"><i class="ph ph-bell-ringing"></i> My Notifications</h2>
+      <span class="badge badge-teal">{{ notifications|length }} total</span>
+    </div>
+    {% if notifications %}
+    {% for notif in notifications %}
+    <div class="notif-item {% if not notif.read %}unread{% endif %}">
+      <span class="notif-icon">
+        <i
+          class="ph ph-{% if notif.notification_type == 'deadline' %}alarm{% elif notif.notification_type == 'grade' %}chart-line-up{% elif notif.notification_type == 'wellness' %}heartbeat{% elif notif.notification_type == 'goal' %}target{% elif notif.notification_type == 'habit' %}fire{% else %}megaphone{% endif %}"></i>
+      </span>
+      <div class="notif-text">
+        <div>{{ notif.message }}</div>
+        <div class="notif-time">
+          {{ notif.created_at|date:"M j, Y g:i A" }} {{ notif.get_notification_type_display }}
+        </div>
+      </div>
+      <form method="post" action="{% url 'notifications:delete' notif.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-danger btn-icon" title="Dismiss">
+          <i class="ph ph-x"></i>
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card text-center" style="padding:44px 20px;">
+      <i class="ph ph-check-circle"
+        style="font-size:3rem;color:var(--accent-green);display:block;margin-bottom:12px;"></i>
+      <h3 style="margin-bottom:8px;">All caught up!</h3>
+      <p class="text-muted">No notifications right now.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Reminder Rules -->
+  <div>
+    <h2 class="page-title mb-16" style="margin-bottom:16px;"><i class="ph ph-sliders"></i> Reminder Rules</h2>
+    <div class="card mb-16">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-plus-circle"></i> Add Rule</span>
+      </div>
+      <form method="post" action="{% url 'notifications:add_rule' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Rule Name</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. 'Deadline warning'" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Trigger</label>
+          <select name="trigger_type" class="form-control">
+            <option value="24h">24 hours before deadline</option>
+            <option value="48h">48 hours before deadline</option>
+            <option value="1week">1 week before deadline</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm" id="add-rule-btn">
+          <i class="ph ph-plus"></i> Add Rule
+        </button>
+      </form>
+    </div>
+
+    {% if reminder_rules %}
+    <div class="card form-glass">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-list-checks"></i> Active Rules</span>
+        <span class="badge badge-teal">{{ reminder_rules|length }}</span>
+      </div>
+      {% for rule in reminder_rules %}
+      <div class="flex-between" style="padding:11px 0;border-bottom:1px solid var(--border-color);">
+        <div>
+          <div style="font-weight:600;font-size:0.875rem;">{{ rule.name }}</div>
+          <div style="font-size:0.73rem;color:var(--text-muted);">{{ rule.get_trigger_type_display }}</div>
+        </div>
+        <form method="post" action="{% url 'notifications:delete_rule' rule.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-danger btn-icon" title="Delete">
+            <i class="ph ph-x"></i>
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

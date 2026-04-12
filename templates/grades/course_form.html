@@ -1,0 +1,32 @@
+﻿{% extends 'base.html' %}
+{% block title %}{{ action }} Course{% endblock %}
+{% block page_title %}{{ action }} Course{% endblock %}
+
+{% block content %}
+<div style="max-width:500px;">
+  <div class="card form-glass">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-books"></i> {{ action }} Course</span>
+      <a href="{% url 'grades:dashboard' %}" class="btn btn-secondary btn-sm">
+        <i class="ph ph-arrow-left"></i> Back
+      </a>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+        <div style="color:var(--accent-coral);font-size:0.73rem;margin-top:4px;">{{ field.errors|join:', ' }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary" id="save-course-btn">
+        <i class="ph ph-floppy-disk"></i> {{ action }} Course
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,48 @@
+﻿{% extends 'base.html' %}
+{% block title %}Subjects{% endblock %}
+{% block page_title %}Manage Subjects{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;">
+  <div class="card mb-16">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-tag"></i> Add Subject</span>
+      <a href="{% url 'tasks:list' %}" class="btn btn-secondary btn-sm">
+        <i class="ph ph-arrow-left"></i> Back to Tasks
+      </a>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+        <div style="color:var(--accent-coral);font-size:0.73rem;margin-top:4px;">{{ field.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary btn-sm" id="add-subject-btn">
+        <i class="ph ph-plus"></i> Add Subject
+      </button>
+    </form>
+  </div>
+
+  <div class="card form-glass">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-list-bullets"></i> My Subjects</span>
+      <span class="badge badge-teal">{{ subjects|length }}</span>
+    </div>
+    {% for subject in subjects %}
+    <div class="flex-center gap-12" style="padding:11px 0;border-bottom:1px solid var(--border-color);">
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-teal);flex-shrink:0;"></div>
+      <div style="font-weight:600;font-size:0.9rem;flex:1;">{{ subject.name }}</div>
+      <span class="badge badge-gray">{{ subject.tasks.count }} task(s)</span>
+    </div>
+    {% empty %}
+    <p class="text-muted" style="padding:16px 0;font-size:0.875rem;">No subjects yet. Add your first!</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,53 @@
+﻿{% extends 'base.html' %}
+{% block title %}Extract Tasks{% endblock %}
+{% block page_title %}Extract Tasks from Syllabus{% endblock %}
+
+{% block content %}
+<div style="max-width:700px;">
+  <div class="card mb-20">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-file-text"></i> Paste Syllabus Text</span>
+      <a href="{% url 'tasks:list' %}" class="btn btn-secondary btn-sm">
+        <i class="ph ph-arrow-left"></i> Back
+      </a>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Paste your syllabus, assignment list, or course outline</label>
+        <textarea name="syllabus_text" class="form-control" rows="8"
+          placeholder="Paste your syllabus text here...&#10;&#10;Example:&#10;Assignment 1: Research Paper due March 15&#10;Quiz 1 â€” Chapter 3 on Feb 20&#10;Project deadline: Submit by April 1"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" id="extract-btn">
+        <i class="ph ph-robot"></i> Extract Tasks with AI
+      </button>
+    </form>
+  </div>
+
+  {% if extracted %}
+  <div class="card form-glass">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-check-circle"></i> Extracted {{ extracted|length }} Task(s)</span>
+    </div>
+    <p class="text-muted mb-16" style="font-size:0.855rem;">Review and click "Create Task" to add them to your tracker.</p>
+    {% for item in extracted %}
+    <div style="background:var(--bg-primary);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;border:1px solid var(--border-color);">
+      <i class="ph ph-clipboard-text" style="color:var(--accent-teal);font-size:1.2rem;flex-shrink:0;margin-top:2px;"></i>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:0.9rem;">{{ item.title }}</div>
+        {% if item.deadline_hint %}
+        <div style="font-size:0.75rem;color:var(--accent-gold);margin-top:3px;">
+          <i class="ph ph-calendar"></i> Detected date: {{ item.deadline_hint }}
+        </div>
+        {% endif %}
+      </div>
+      <a href="{% url 'tasks:create' %}?title={{ item.title|urlencode }}" class="btn btn-sm btn-primary">
+        <i class="ph ph-plus"></i> Create
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+

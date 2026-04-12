@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Tasks{% endblock %}
+{% block page_title %}Tasks{% endblock %}
+
+{% block content %}
+<!-- Page header -->
+<div class="flex-between mb-22">
+  <div>
+    <h2 class="page-title"><i class="ph ph-check-square"></i> My Tasks</h2>
+    <p class="page-subtitle">AI-prioritized tasks sorted by urgency, priority and difficulty.</p>
+  </div>
+  <div class="flex gap-10">
+    <a href="{% url 'tasks:extract' %}" class="btn btn-secondary" id="extract-btn">
+      <i class="ph ph-file-text"></i> Extract from Syllabus
+    </a>
+    <a href="{% url 'tasks:create' %}" class="btn btn-primary" id="add-task-btn">
+      <i class="ph ph-plus"></i> Add Task
+    </a>
+  </div>
+</div>
+
+<!-- Filters bar -->
+<div class="card form-glass mb-20">
+  <form method="get" class="flex gap-14 flex-wrap" style="align-items:flex-end;">
+    <div class="form-group mb-0">
+      <label class="form-label">Status</label>
+      <select name="status" class="form-control" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+        <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+      </select>
+    </div>
+    <div class="form-group mb-0">
+      <label class="form-label">Subject</label>
+      <select name="subject" class="form-control" onchange="this.form.submit()">
+        <option value="">All Subjects</option>
+        {% for s in subjects %}
+        <option value="{{ s.pk }}" {% if subject_filter == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <a href="{% url 'tasks:subjects' %}" class="btn btn-secondary btn-sm" style="margin-bottom:0;">
+      <i class="ph ph-tag"></i> Subjects
+    </a>
+  </form>
+</div>
+
+<!-- Stats row -->
+<div class="grid grid-4 mb-20">
+  <div class="stat-card">
+    <div class="stat-icon bg-coral-soft"><i class="ph ph-warning-octagon"></i></div>
+    <div>
+      <div class="stat-value text-coral">{{ overdue_count|default:"0" }}</div>
+      <div class="stat-label">Overdue</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-gold-soft"><i class="ph ph-alarm"></i></div>
+    <div>
+      <div class="stat-value text-gold">{{ due_today|default:"0" }}</div>
+      <div class="stat-label">Due Today</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-teal-soft"><i class="ph ph-list-checks"></i></div>
+    <div>
+      <div class="stat-value text-teal">{{ tasks|length }}</div>
+      <div class="stat-label">Showing</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-green-soft"><i class="ph ph-check-circle"></i></div>
+    <div>
+      <div class="stat-value text-green">{{ completed_count|default:"0" }}</div>
+      <div class="stat-label">Completed</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tasks -->
+{% if tasks %}
+{% for task in tasks %}
+<div class="task-card">
+  <div class="task-dot" data-status="{{ task.status }}">
+  </div>
+  <div class="task-info">
+    <div class="task-title">{{ task.title }}</div>
+    <div class="task-meta">
+      {% if task.subject %}<span class="subject-tag">{{ task.subject.name }}</span>{% endif %}
+      <span class="badge badge-gray">P{{ task.priority }}/5</span>
+      <span class="badge badge-gray">Diff {{ task.difficulty }}/5</span>
+      <span
+        class="badge {% if task.status == 'completed' %}badge-green{% elif task.status == 'overdue' %}badge-coral{% elif task.status == 'in_progress' %}badge-gold{% else %}badge-teal{% endif %}">
+        {{ task.get_status_display }}
+      </span>
+      <span class="task-countdown {% if task.urgency_score >= 7 %}urgent{% endif %}"
+        data-deadline="{{ task.deadline|date:'c' }}">{{ task.time_remaining_display }}</span>
+    </div>
+    {% if task.description %}
+    <div style="font-size:0.8rem;color:var(--text-muted);margin-top:5px;">{{ task.description|truncatechars:90 }}</div>
+    {% endif %}
+  </div>
+  <div class="task-actions">
+    {% if task.status != 'completed' %}
+    <a href="{% url 'tasks:complete' task.pk %}" class="btn btn-sm btn-secondary btn-icon" title="Complete">
+      <i class="ph ph-check"></i>
+    </a>
+    {% endif %}
+    <a href="{% url 'tasks:edit' task.pk %}" class="btn btn-sm btn-secondary btn-icon" title="Edit">
+      <i class="ph ph-pencil-simple"></i>
+    </a>
+    <form method="post" action="{% url 'tasks:delete' task.pk %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-danger btn-icon" title="Delete"
+        onclick="return confirm('Delete this task?')">
+        <i class="ph ph-trash"></i>
+      </button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card text-center" style="padding:52px 20px;">
+  <i class="ph ph-confetti" style="font-size:3rem;color:var(--accent-teal);display:block;margin-bottom:14px;"></i>
+  <h3 style="margin-bottom:8px;font-size:1.1rem;">All clear!</h3>
+  <p class="text-muted mb-16">No tasks match your current filters.</p>
+  <a href="{% url 'tasks:create' %}" class="btn btn-primary" style="display:inline-flex;">
+    <i class="ph ph-plus"></i> Add a Task
+  </a>
+</div>
+{% endif %}
+
+<style>
+  .mb-22 {
+    margin-bottom: 22px;
+  }
+
+  .gap-10 {
+    gap: 10px;
+  }
+
+  .gap-14 {
+    gap: 14px;
+  }
+
+  .task-dot[data-status="overdue"] {
+    background: var(--accent-coral);
+  }
+
+  .task-dot[data-status="completed"] {
+    background: var(--accent-green);
+  }
+
+  .task-dot[data-status="in_progress"] {
+    background: var(--accent-gold);
+  }
+
+  .task-dot[data-status="pending"] {
+    background: var(--accent-teal);
+  }
+</style>
+{% endblock %}

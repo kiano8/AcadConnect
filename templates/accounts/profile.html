@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="profile-layout">
+
+  <!-- ── Sidebar card ── -->
+  <div class="profile-sidebar">
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar" id="avatar-preview-wrap">
+        {% if user.profile_photo %}
+        <img src="{{ user.profile_photo.url }}" alt="Profile photo" id="avatar-img">
+        {% else %}
+        <span class="avatar-initial" id="avatar-initial">{{ user.username|first|upper }}</span>
+        {% endif %}
+        <label class="avatar-upload-btn" for="photo-input" title="Change photo">
+          <i class="ph ph-camera"></i>
+        </label>
+      </div>
+      <div class="profile-name">{{ user.full_name }}</div>
+      <div class="profile-role-badge">
+        <i class="ph ph-identification-badge"></i> {{ user.get_role_display }}
+      </div>
+    </div>
+
+    <div class="profile-info-list">
+      <div class="profile-info-item">
+        <i class="ph ph-at"></i>
+        <div>
+          <div class="info-label">Username</div>
+          <div class="info-value">{{ user.username }}</div>
+        </div>
+      </div>
+      <div class="profile-info-item">
+        <i class="ph ph-envelope-simple"></i>
+        <div>
+          <div class="info-label">Email</div>
+          <div class="info-value">{{ user.email }}</div>
+        </div>
+      </div>
+      <div class="profile-info-item">
+        <i class="ph ph-calendar-blank"></i>
+        <div>
+          <div class="info-label">Member Since</div>
+          <div class="info-value">{{ user.date_joined|date:"F Y" }}</div>
+        </div>
+      </div>
+      <div class="profile-info-item">
+        <i class="ph ph-graduation-cap"></i>
+        <div>
+          <div class="info-label">Role</div>
+          <div class="info-value">{{ user.get_role_display }}</div>
+        </div>
+      </div>
+    </div>
+
+    <a href="{% url 'accounts:logout' %}" class="btn btn-danger w-100" style="justify-content:center;margin-top:6px;">
+      <i class="ph ph-sign-out"></i> Log Out
+    </a>
+  </div>
+
+  <!-- ── Main form area ── -->
+  <div class="profile-main">
+
+    <div class="card mb-20">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-user-circle-gear"></i> Edit Profile</span>
+      </div>
+      <form method="post" enctype="multipart/form-data" id="profile-form">
+        {% csrf_token %}
+
+        <!-- Hidden file input (triggered by camera icon) -->
+        <input type="file" name="profile_photo" id="photo-input" accept="image/*" style="display:none;"
+          onchange="previewAvatar(this)">
+
+        {% for field in form %}
+        {% if field.name != 'profile_photo' %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+          <div style="font-size:0.73rem;color:var(--text-muted);margin-top:4px;">{{ field.help_text }}</div>
+          {% endif %}
+          {% if field.errors %}
+          <div style="color:var(--accent-coral);font-size:0.73rem;margin-top:4px;">{{ field.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        <div class="flex gap-10 mt-8">
+          <button type="submit" class="btn btn-primary" id="save-profile-btn">
+            <i class="ph ph-floppy-disk"></i> Save Changes
+          </button>
+          <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">
+            <i class="ph ph-arrow-left"></i> Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Activity summary card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="ph ph-chart-bar"></i> My Activity</span>
+      </div>
+      <div class="grid grid-3" style="gap:14px;text-align:center;">
+        <div class="profile-stat-box">
+          <div class="profile-stat-val text-teal">{{ user.tasks.count|default:"0" }}</div>
+          <div class="profile-stat-label">Total Tasks</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="profile-stat-val text-green">{{ user.habits.count|default:"0" }}</div>
+          <div class="profile-stat-label">Habits</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="profile-stat-val text-coral">{{ user.collaborationgroup_set.count|default:"0" }}</div>
+          <div class="profile-stat-label">Groups</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .profile-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Sidebar */
+  .profile-sidebar {
+    background: var(--glass-bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 28px 22px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .profile-avatar-wrap {
+    text-align: center;
+  }
+
+  .profile-avatar {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    overflow: hidden;
+    border: 3px solid var(--accent-mint);
+    box-shadow: 0 0 0 6px rgba(168, 218, 220, 0.15), var(--shadow-md);
+    background: linear-gradient(135deg, var(--accent-teal), var(--accent-mint));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-initial {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: white;
+  }
+
+  .avatar-upload-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(13, 59, 102, 0.68);
+    backdrop-filter: blur(4px);
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    color: white;
+    font-size: 1rem;
+  }
+
+  .avatar-upload-btn:hover {
+    background: rgba(42, 157, 143, 0.75);
+  }
+
+  .profile-name {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+  }
+
+  .profile-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent-teal);
+    background: rgba(42, 157, 143, 0.1);
+    border: 1px solid rgba(42, 157, 143, 0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  /* Info list */
+  .profile-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+  }
+
+  .profile-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+  }
+
+  .profile-info-item>i {
+    font-size: 1rem;
+    color: var(--accent-teal);
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .info-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 1px;
+  }
+
+  .info-value {
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* Activity stats */
+  .profile-stat-box {
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 14px 10px;
+    backdrop-filter: var(--glass-blur-sm);
+  }
+
+  .profile-stat-val {
+    font-family: var(--font-heading);
+    font-size: 1.7rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+
+  .profile-stat-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* gap utility */
+  .gap-10 {
+    gap: 10px;
+  }
+
+  @media (max-width: 860px) {
+    .profile-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const wrap = document.getElementById('avatar-preview-wrap');
+        const existing = wrap.querySelector('img') || wrap.querySelector('.avatar-initial');
+        if (existing) existing.remove();
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.id = 'avatar-img';
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+        wrap.insertBefore(img, wrap.querySelector('.avatar-upload-btn'));
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+</script>
+{% endblock %}

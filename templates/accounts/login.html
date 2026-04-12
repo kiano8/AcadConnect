@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — AcadConnect</title>
+<meta name="description" content="Sign in to your AcadConnect student hub.">
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
+<link rel="stylesheet" href="{% static 'css/features.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<link rel="icon" href="{% static 'images/gra.png' %}">
+</head>
+<body>
+
+<canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+
+<div class="lp-wrap">
+
+  <!-- NAV -->
+  <nav class="lp-nav scrolled" id="lp-nav">
+    <div class="lp-nav-inner">
+      <a href="{% url 'accounts:landing' %}" class="lp-brand">
+        <i class="ph ph-graduation-cap"></i> <span>AcadConnect</span>
+      </a>
+      <div class="lp-nav-links"></div>
+      <div class="lp-nav-cta">
+        <a href="{% url 'accounts:login' %}" class="lp-btn-ghost">Sign In</a>
+        <a href="{% url 'accounts:register' %}" class="lp-btn-solid">Get Started Free</a>
+      </div>
+      <button class="lp-theme-toggle" id="lp-theme-toggle" aria-label="Toggle theme">
+        <i class="ph ph-sun" id="lp-theme-icon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- AUTH CARD -->
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-brand-icon"><i class="ph ph-graduation-cap"></i></div>
+        <h1 class="auth-title">Welcome Back!</h1>
+        <p class="auth-sub">Sign in to your student hub</p>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %} mb-12">
+          <i class="ph ph-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}x-circle{% else %}info{% endif %}"></i>
+          {{ message }}
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label" for="id_username">Username</label>
+          <input type="text" name="username" class="form-control" placeholder="Your username" id="id_username" required autofocus>
+        </div>
+        <div class="form-group">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+            <label class="form-label" for="id_password" style="margin-bottom:0;">Password</label>
+            <a href="{% url 'accounts:forgot_password' %}" style="font-size:.74rem;color:var(--accent-teal);font-weight:600;">
+              Forgot password?
+            </a>
+          </div>
+          <input type="password" name="password" class="form-control" placeholder="Your password" id="id_password" required>
+        </div>
+
+        {% if unverified_email %}
+        <div class="alert alert-warning mb-16" style="flex-direction:column;align-items:flex-start;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <i class="ph ph-envelope-simple-warning" style="font-size:1.1rem;"></i>
+            <strong>Email not verified.</strong>
+          </div>
+          <div style="font-size:.82rem;">Check your inbox or resend the verification link:</div>
+          <form method="post" action="{% url 'accounts:resend_verification' %}" style="width:100%;">
+            {% csrf_token %}
+            <input type="hidden" name="email" value="{{ unverified_email }}">
+            <button type="submit" class="btn btn-sm btn-secondary" style="width:100%;justify-content:center;">
+              <i class="ph ph-arrow-clockwise"></i> Resend Verification Email
+            </button>
+          </form>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary w-100" id="login-btn" style="justify-content:center;margin-top:4px;">
+          Sign In <i class="ph ph-arrow-right"></i>
+        </button>
+      </form>
+
+      <p class="text-center mt-16" style="font-size:0.875rem;color:var(--text-muted);">
+        New here? <a href="{% url 'accounts:register' %}">Create an account</a>
+      </p>
+      <p class="text-center mt-8" style="font-size:0.8rem;">
+        <a href="{% url 'accounts:landing' %}">← Back to home</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="lp-footer">
+    <div class="lp-footer-inner">
+      <div class="lp-footer-brand">
+        <a href="{% url 'accounts:landing' %}" class="lp-footer-logo">
+          <i class="ph ph-graduation-cap"></i><span>AcadConnect</span>
+        </a>
+        <p class="lp-footer-tagline">Your all-in-one student hub for tasks, schedules, grades, habits, and wellness.</p>
+      </div>
+      <div class="lp-footer-col">
+        <h5>Features</h5>
+        <a href="{% url 'accounts:login' %}">Smart Task Tracker</a>
+        <a href="{% url 'accounts:login' %}">Schedule Planner</a>
+        <a href="{% url 'accounts:login' %}">GPA Monitoring</a>
+        <a href="{% url 'accounts:login' %}">Habit Tracker</a>
+        <a href="{% url 'accounts:login' %}">Wellness Hub</a>
+      </div>
+      <div class="lp-footer-col">
+        <h5>Account</h5>
+        <a href="{% url 'accounts:register' %}">Get Started Free</a>
+        <a href="{% url 'accounts:login' %}">Sign In</a>
+      </div>
+    </div>
+    <div class="lp-footer-bottom">
+      <span class="lp-footer-copy">© 2026 AcadConnect. All rights reserved.</span>
+      <span class="lp-footer-heart">Built with <i class="ph ph-heart"></i> for college students.</span>
+    </div>
+  </footer>
+
+</div><!-- /.lp-wrap -->
+
+<script src="{% static 'js/backgroundwaves.js' %}"></script>
+<script>
+// Sticky nav
+window.addEventListener('scroll', () => {
+  document.getElementById('lp-nav').classList.toggle('scrolled', window.scrollY > 40);
+});
+
+// Theme toggle
+const themeToggle = document.getElementById('lp-theme-toggle');
+const themeIcon   = document.getElementById('lp-theme-icon');
+const saved       = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', saved);
+themeIcon.className = saved === 'dark' ? 'ph ph-sun' : 'ph ph-moon';
+
+themeToggle.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  themeIcon.className = next === 'dark' ? 'ph ph-sun' : 'ph ph-moon';
+});
+</script>
+</body>
+</html>

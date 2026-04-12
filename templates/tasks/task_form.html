@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Task{% endblock %}
+{% block page_title %}{{ action }} Task{% endblock %}
+
+{% block content %}
+<div class="form-page-wrap">
+
+  <!-- Breadcrumb -->
+  <div class="form-breadcrumb">
+    <a href="{% url 'tasks:list' %}" class="breadcrumb-link">
+      <i class="ph ph-check-square"></i> Tasks
+    </a>
+    <i class="ph ph-caret-right breadcrumb-sep"></i>
+    <span>{{ action }} Task</span>
+  </div>
+
+  <div class="form-card">
+    <!-- Header -->
+    <div class="form-card-header">
+      <div class="form-card-icon {% if action == 'Create' %}icon-teal{% else %}icon-gold{% endif %}">
+        <i class="ph ph-{% if action == 'Create' %}plus{% else %}pencil-simple{% endif %}"></i>
+      </div>
+      <div>
+        <h2 class="form-card-title">{% if action == 'Create' %}New Task{% else %}Edit Task{% endif %}</h2>
+        <p class="form-card-sub">{% if action == 'Create' %}Add a new task to your to-do list{% else %}Update this task's details{% endif %}</p>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error"><i class="ph ph-warning-circle"></i> {{ form.non_field_errors|join:", " }}</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+
+      <!-- ── Section 1: Task Details ── -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-text-align-left"></i> Task Details</div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.title.id_for_label }}">
+            Task Title <span class="required-dot">*</span>
+          </label>
+          {{ form.title }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.title.help_text }}</div>
+          {% if form.title.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.title.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+          {{ form.description }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.description.help_text }}</div>
+          {% if form.description.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.description.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.subject.id_for_label }}">Subject</label>
+          {{ form.subject }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.subject.help_text }}</div>
+          {% if form.subject.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.subject.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ── Section 2: Deadline & Priority ── -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-clock-countdown"></i> Deadline &amp; Priority</div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.deadline.id_for_label }}">
+            Deadline <span class="required-dot">*</span>
+          </label>
+          {{ form.deadline }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.deadline.help_text }}</div>
+          {% if form.deadline.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.deadline.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="grid grid-2" style="gap:16px;">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.priority.id_for_label }}">
+              Priority <span class="required-dot">*</span>
+            </label>
+            {{ form.priority }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.priority.help_text }}</div>
+            {% if form.priority.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.priority.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.difficulty.id_for_label }}">
+              Difficulty <span class="required-dot">*</span>
+            </label>
+            {{ form.difficulty }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.difficulty.help_text }}</div>
+            {% if form.difficulty.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.difficulty.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+          {{ form.status }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.status.help_text }}</div>
+          {% if form.status.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.status.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ── Section 3: Attachments & Notes ── -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="ph ph-paperclip"></i> Attachments &amp; Notes</div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.file_attachment.id_for_label }}">File Attachment</label>
+          {{ form.file_attachment }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.file_attachment.help_text }}</div>
+          {% if form.file_attachment.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.file_attachment.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.notes.id_for_label }}">Notes</label>
+          {{ form.notes }}
+          <div class="form-hint"><i class="ph ph-info"></i> {{ form.notes.help_text }}</div>
+          {% if form.notes.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.notes.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="submit-task-btn">
+          <i class="ph ph-{% if action == 'Create' %}plus-circle{% else %}floppy-disk{% endif %}"></i>
+          {{ action }} Task
+        </button>
+        <a href="{% url 'tasks:list' %}" class="btn btn-secondary">
+          <i class="ph ph-x"></i> Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

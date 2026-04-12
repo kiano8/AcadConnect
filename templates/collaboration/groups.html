@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Groups{% endblock %}
+{% block page_title %}Collaboration Groups{% endblock %}
+
+{% block content %}
+<div class="flex-between mb-22">
+  <div>
+    <h2 class="page-title"><i class="ph ph-users-four"></i> Study Groups</h2>
+    <p class="page-subtitle">Collaborate with classmates on group projects and assignments.</p>
+  </div>
+</div>
+
+<div class="grid grid-2 gap-20" style="align-items:start;">
+
+  <!-- ── Create Group form ── -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon icon-teal">
+        <i class="ph ph-users-four"></i>
+      </div>
+      <div>
+        <h3 class="form-card-title">Create New Group</h3>
+        <p class="form-card-sub">Start a study group with your classmates</p>
+      </div>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-section">
+        {% for field in form %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {% if field.field.required %}<span class="required-dot">*</span>{% endif %}
+          </label>
+          {{ field }}
+          {% if field.errors %}
+          <div class="form-error"><i class="ph ph-warning-circle"></i> {{ field.errors|join:', ' }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="create-group-btn">
+          <i class="ph ph-plus-circle"></i> Create Group
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Groups list ── -->
+  <div>
+    {% if groups %}
+      {% for group in groups %}
+      <a href="{% url 'collaboration:detail' group.pk %}" style="text-decoration:none;display:block;margin-bottom:12px;">
+        <div class="card group-card">
+          <div class="card-header">
+            <span class="card-title"><i class="ph ph-users"></i> {{ group.name }}</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span class="badge badge-teal">{{ group.members.count }} member{{ group.members.count|pluralize }}</span>
+              <span class="badge badge-neutral">{{ group.group_tasks.count }} task{{ group.group_tasks.count|pluralize }}</span>
+            </div>
+          </div>
+          {% if group.description %}
+          <p style="font-size:.82rem;color:var(--text-muted);margin:4px 0 10px;line-height:1.6;">{{ group.description }}</p>
+          {% endif %}
+          <div style="font-size:.73rem;color:var(--text-muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span><i class="ph ph-calendar-blank"></i> Created {{ group.created_at|date:"M j, Y" }}</span>
+            <span>·</span>
+            {% if group.created_by == request.user %}
+            <span class="role-badge role-creator" style="font-size:.68rem;"><i class="ph ph-crown-simple"></i> You created this</span>
+            {% else %}
+            <span>by <strong style="color:var(--text-secondary);">{{ group.created_by.username }}</strong></span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <div class="card text-center" style="padding:52px 20px;">
+        <i class="ph ph-users-four" style="font-size:3rem;color:var(--accent-teal);display:block;margin-bottom:14px;opacity:.6;"></i>
+        <h3 style="margin-bottom:6px;font-size:1rem;">No groups yet</h3>
+        <p class="text-muted" style="font-size:.875rem;">Create your first study group using the form on the left.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<style>
+.group-card { cursor:pointer; transition:transform .18s,box-shadow .18s; }
+.group-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+.mb-22 { margin-bottom:22px; }
+.badge-neutral { background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border-color); }
+.role-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:.7rem; font-weight:600; }
+.role-creator { background:linear-gradient(135deg,#f59e0b22,#f59e0b11); color:#f59e0b; border:1px solid #f59e0b44; }
+</style>
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block title %}Habits{% endblock %}
+{% block page_title %}Daily Habits{% endblock %}
+
+{% block content %}
+<div class="flex-between" style="margin-bottom:22px;">
+  <div>
+    <h2 class="page-title"><i class="ph ph-fire"></i> Daily Habits</h2>
+    <p class="page-subtitle">Build consistency — track your daily habits and streaks.</p>
+  </div>
+  <a href="{% url 'habits:goals' %}" class="btn btn-secondary">
+    <i class="ph ph-target"></i> Goals
+  </a>
+</div>
+
+<div class="grid grid-2 gap-20" style="align-items:start;">
+
+  <!-- ── Add Habit Form ── -->
+  <div>
+    <div class="form-card" style="margin-bottom:20px;">
+      <div class="form-card-header">
+        <div class="form-card-icon icon-teal">
+          <i class="ph ph-plus"></i>
+        </div>
+        <div>
+          <h3 class="form-card-title">Add New Habit</h3>
+          <p class="form-card-sub">Commit to a daily practice — start small, stay consistent</p>
+        </div>
+      </div>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Basic Info -->
+        <div class="form-section">
+          <div class="form-section-label"><i class="ph ph-sparkle"></i> Habit Details</div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ form.name.id_for_label }}">
+              Habit Name <span class="required-dot">*</span>
+            </label>
+            {{ form.name }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.name.help_text }}</div>
+            {% if form.name.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.name.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+            {{ form.description }}
+            <div class="form-hint"><i class="ph ph-info"></i> {{ form.description.help_text }}</div>
+            {% if form.description.errors %}
+            <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.description.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Frequency & Category -->
+        <div class="form-section">
+          <div class="form-section-label"><i class="ph ph-repeat"></i> Frequency &amp; Category</div>
+
+          <div class="grid grid-2" style="gap:14px;">
+            <div class="form-group">
+              <label class="form-label" for="{{ form.frequency.id_for_label }}">
+                Frequency <span class="required-dot">*</span>
+              </label>
+              {{ form.frequency }}
+              <div class="form-hint"><i class="ph ph-info"></i> {{ form.frequency.help_text }}</div>
+              {% if form.frequency.errors %}
+              <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.frequency.errors|join:', ' }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="{{ form.category.id_for_label }}">
+                Category <span class="required-dot">*</span>
+              </label>
+              {{ form.category }}
+              <div class="form-hint"><i class="ph ph-info"></i> {{ form.category.help_text }}</div>
+              {% if form.category.errors %}
+              <div class="form-error"><i class="ph ph-warning-circle"></i> {{ form.category.errors|join:', ' }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="form-section">
+          <div class="form-section-label"><i class="ph ph-palette"></i> Appearance</div>
+          <div class="form-group" style="display:flex;align-items:center;gap:16px;">
+            <div style="flex:1;">
+              <label class="form-label" for="{{ form.color.id_for_label }}">Tracker Colour</label>
+              <div class="form-hint"><i class="ph ph-info"></i> {{ form.color.help_text }}</div>
+            </div>
+            {{ form.color }}
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="add-habit-btn">
+            <i class="ph ph-plus-circle"></i> Add Habit
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Quote -->
+    <div class="quote-card">
+      <p class="quote-text">"We are what we repeatedly do. Excellence, then, is not an act, but a habit."</p>
+      <p class="quote-author">— Aristotle</p>
+    </div>
+  </div>
+
+  <!-- ── Today's Habits ── -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="ph ph-sun"></i> Today — {{ today|date:"F j, Y" }}</span>
+      <span class="badge badge-teal">{{ habits|length }} active</span>
+    </div>
+
+    {% if habits %}
+      {% for habit in habits %}
+      <div class="habit-item">
+        <a href="{% url 'habits:habit_check' habit.pk %}"
+           class="habit-check {% if habit_status|get_item:habit.id %}done{% endif %}"
+           title="Toggle {{ habit.name }}">
+          <i class="ph ph-check" style="font-size:0.75rem;"></i>
+        </a>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ habit.name }}</div>
+          <div style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;display:flex;gap:8px;align-items:center;">
+            <span><i class="ph ph-tag"></i> {{ habit.get_category_display }}</span>
+            <span><i class="ph ph-repeat"></i> {{ habit.get_frequency_display }}</span>
+          </div>
+        </div>
+        <div class="habit-streak"><i class="ph ph-fire"></i> {{ habit.current_streak }}d</div>
+        <form method="post" action="{% url 'habits:habit_delete' habit.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-danger btn-icon" title="Remove habit"
+                  onclick="return confirm('Remove &quot;{{ habit.name }}&quot;?')">
+            <i class="ph ph-x"></i>
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="padding:44px 20px;text-align:center;">
+        <i class="ph ph-fire" style="font-size:3rem;color:var(--accent-coral);display:block;margin-bottom:12px;opacity:.45;"></i>
+        <h4 style="font-size:0.95rem;margin-bottom:6px;">No habits yet</h4>
+        <p class="text-muted" style="font-size:.875rem;">Add your first habit using the form on the left.</p>
+      </div>
+    {% endif %}
+
+    <!-- Tips -->
+    <div style="margin-top:20px;border-top:1px solid var(--border-color);padding-top:16px;">
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:10px;">
+        <i class="ph ph-lightbulb"></i> Habit Tips
+      </div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">
+        <li class="tip-item"><i class="ph ph-map-pin" style="color:var(--accent-teal);"></i> Start small — commit to just 2 minutes daily</li>
+        <li class="tip-item"><i class="ph ph-alarm" style="color:var(--accent-gold);"></i> Stack habits after existing routines</li>
+        <li class="tip-item"><i class="ph ph-fire" style="color:var(--accent-coral);"></i> A 7-day streak = a habit forming</li>
+        <li class="tip-item"><i class="ph ph-star" style="color:var(--accent-green);"></i> Reward yourself for each milestone</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.tip-item {
+  display:flex;align-items:center;gap:8px;
+  font-size:.83rem;color:var(--text-secondary);
+  padding:9px 12px;
+  background:var(--glass-bg);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius-sm);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en"
+  data-theme="{% if request.user.is_authenticated and request.user.dark_mode %}dark{% else %}light{% endif %}">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AcadConnect{% endblock %} | AcadConnect</title>
+  <meta name="description" content="Your all-in-one college productivity and lifestyle companion.">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <link rel="stylesheet" href="{% static 'css/features.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
+    rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+  <link rel="icon" href="{% static 'images/gra.png' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+  {% if request.user.is_authenticated %}
+  <div class="app-wrapper">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a href="{% url 'dashboard:home' %}" class="sidebar-brand">
+          <div class="brand-icon"><i class="ph ph-graduation-cap"></i></div>
+          <div>
+            <span class="brand-name">AcadConnect</span>
+            <span class="brand-sub">Student Hub</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="{% url 'dashboard:home' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'dashboard' %}active{% endif %}">
+          <i class="ph ph-house nav-icon"></i><span>Dashboard</span>
+        </a>
+
+        <div class="nav-section-label">Academics</div>
+        <a href="{% url 'tasks:list' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'tasks' %}active{% endif %}">
+          <i class="ph ph-check-square nav-icon"></i><span>Tasks</span>
+        </a>
+        <a href="{% url 'schedule:calendar' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'schedule' and request.resolver_match.url_name != 'free_time' %}active{% endif %}">
+          <i class="ph ph-calendar-check nav-icon"></i><span>Schedule</span>
+        </a>
+        <a href="{% url 'grades:dashboard' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'grades' %}active{% endif %}">
+          <i class="ph ph-chart-line-up nav-icon"></i><span>Grades</span>
+        </a>
+        <a href="{% url 'schedule:free_time' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'schedule' and request.resolver_match.url_name == 'free_time' %}active{% endif %}">
+          <i class="ph ph-clock nav-icon"></i><span>Free Time</span>
+        </a>
+
+        <div class="nav-section-label">Lifestyle</div>
+        <a href="{% url 'habits:habits' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'habits' and request.resolver_match.url_name == 'habits' %}active{% endif %}">
+          <i class="ph ph-fire nav-icon"></i><span>Habits</span>
+        </a>
+        <a href="{% url 'habits:goals' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'habits' and request.resolver_match.url_name != 'habits' %}active{% endif %}">
+          <i class="ph ph-target nav-icon"></i><span>Goals</span>
+        </a>
+        <a href="{% url 'wellness:hub' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'wellness' %}active{% endif %}">
+          <i class="ph ph-heartbeat nav-icon"></i><span>Wellness</span>
+        </a>
+
+        <div class="nav-section-label">Connect</div>
+        <a href="{% url 'collaboration:list' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'collaboration' %}active{% endif %}">
+          <i class="ph ph-users-four nav-icon"></i><span>Groups</span>
+        </a>
+        <a href="{% url 'notifications:center' %}"
+          class="nav-link {% if request.resolver_match.namespace == 'notifications' %}active{% endif %}">
+          <i class="ph ph-bell-ringing nav-icon"></i><span>Notifications</span>
+          <span class="nav-badge" id="sidebar-notif-count" style="display:none"></span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-mini">
+          <div class="user-avt">
+            {% if request.user.profile_photo %}
+            <img src="{{ request.user.profile_photo.url }}" alt="{{ request.user.username }}">
+            {% else %}
+            {{ request.user.username|first|upper }}
+            {% endif %}
+          </div>
+          <div>
+            <div class="user-name">{{ request.user.full_name }}</div>
+            <div class="user-role">{{ request.user.get_role_display }}</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main area -->
+    <div class="main-content">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle menu">
+            <i class="ph ph-list"></i>
+          </button>
+          <span class="topbar-title">{% block page_title %}Dashboard{% endblock %}</span>
+        </div>
+        <div class="topbar-actions">
+          <a href="{% url 'tasks:create' %}" class="topbar-btn" title="Add Task">
+            <i class="ph ph-plus"></i>
+          </a>
+          <a href="{% url 'notifications:center' %}" class="topbar-btn" title="Notifications">
+            <i class="ph ph-bell"></i>
+            <span class="notif-badge" id="topbar-notif-badge" style="display:none"></span>
+          </a>
+          <button class="topbar-btn" id="theme-toggle-btn" title="Toggle theme" aria-label="Toggle dark/light mode">
+            <i class="ph ph-sun" id="theme-toggle-icon"></i>
+          </button>
+          <a href="{% url 'accounts:profile' %}" class="topbar-btn" title="Profile">
+            <i class="ph ph-user-circle"></i>
+          </a>
+          <a href="{% url 'accounts:logout' %}" class="topbar-btn" title="Logout">
+            <i class="ph ph-sign-out"></i>
+          </a>
+        </div>
+      </header>
+
+      <!-- Django messages -->
+      {% if messages %}
+      <div style="padding: 14px 26px 0;">
+        {% for message in messages %}
+        <div
+          class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
+          <i
+            class="ph ph-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}x-circle{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}"></i>
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Page Content -->
+      <main class="page-content fade-in">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  {% else %}
+  {% block auth_content %}{% endblock %}
+  {% endif %}
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>
