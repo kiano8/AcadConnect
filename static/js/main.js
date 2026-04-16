@@ -147,5 +147,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ============================================================
+  // Initialize Flatpickr for Datetime inputs
+  // ============================================================
+  const dateInputs = document.querySelectorAll('input[type="datetime-local"]');
+  if (dateInputs.length > 0) {
+    flatpickr(dateInputs, {
+      enableTime: true,
+      dateFormat: "Y-m-d\\TH:i",
+      altInput: true,
+      altFormat: "M j, Y at h:i K",
+      time_24hr: false
+    });
+  }
 
 });
