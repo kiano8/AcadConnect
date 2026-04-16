@@ -873,6 +873,7 @@ chatBox.querySelectorAll('[data-msg-id]').forEach(el => {
 });
 
 function appendGroupMsg(m) {
+  if (chatBox.querySelector(`[data-msg-id="${m.id}"]`)) return;
   const empty = document.getElementById('group-chat-empty');
   if (empty) empty.remove();
   const isMe = m.is_me;
@@ -953,6 +954,7 @@ function pollTaskChat(taskPk) {
 function appendTaskMsg(taskPk, m) {
   const box = document.getElementById(`task-chat-box-${taskPk}`);
   if (!box) return;
+  if (box.querySelector(`[data-msg-id="${m.id}"]`)) return;
   const empty = box.querySelector('.chat-empty');
   if (empty) empty.remove();
   const isMe = m.sender === CURRENT_USER;
