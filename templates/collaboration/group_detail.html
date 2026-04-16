@@ -297,8 +297,8 @@
       <div class="chat-box" id="chat-box"
            data-group-pk="{{ group.pk }}"
            data-poll-url="{% url 'collaboration:messages_api' group.pk %}">
-        {% for msg in messages %}
-        <div class="msg-row {% if msg.sender == request.user %}msg-row-me{% else %}msg-row-them{% endif %}">
+        {% for msg in group_messages %}
+        <div class="msg-row {% if msg.sender == request.user %}msg-row-me{% else %}msg-row-them{% endif %}" data-msg-id="{{ msg.pk }}">
           <div class="msg-avt">{{ msg.sender.username|first|upper }}</div>
           <div>
             {% if msg.sender != request.user %}<div class="msg-name">{{ msg.sender.username }}</div>{% endif %}

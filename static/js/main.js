@@ -147,40 +147,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ============================================================
-  // Group Chat Polling
-  // ============================================================
-  const chatBox = document.getElementById('chat-box');
-  if (chatBox) {
-    const groupPk  = chatBox.dataset.groupPk;
-    let lastCount  = chatBox.querySelectorAll('.msg-bubble').length;
-
-    function pollMessages() {
-      fetch(`/collaboration/${groupPk}/messages/api/`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.messages.length !== lastCount) {
-            lastCount = data.messages.length;
-            chatBox.innerHTML = '';
-            data.messages.forEach(msg => {
-              const div = document.createElement('div');
-              div.className = 'mb-8';
-              div.innerHTML = `
-                <div class="msg-bubble ${msg.is_me ? 'me' : 'them'}">
-                  ${!msg.is_me ? `<div class="msg-sender">${msg.sender}</div>` : ''}
-                  ${msg.content}
-                  ${msg.is_me ? `<div class="msg-time">${msg.timestamp}</div>` : ''}
-                </div>`;
-              chatBox.appendChild(div);
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
-          }
-        })
-        .catch(() => {});
-    }
-
-    setInterval(pollMessages, 5000);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
 
 });

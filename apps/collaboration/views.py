@@ -49,7 +49,7 @@ def group_list(request):
 def group_detail(request, pk):
     group = get_object_or_404(Group, pk=pk, members=request.user)
     tasks = GroupTask.objects.filter(group=group).prefetch_related('assigned_to')
-    messages_list = Message.objects.filter(group=group).order_by('timestamp').select_related('sender')[:100]
+    group_messages = Message.objects.filter(group=group).order_by('timestamp').select_related('sender')[:100]
     task_form = GroupTaskForm(group=group)
     add_member_form = AddMemberForm()
     is_creator = _is_creator(group, request.user)
@@ -69,7 +69,7 @@ def group_detail(request, pk):
     return render(request, 'collaboration/group_detail.html', {
         'group': group,
         'tasks': tasks,
-        'messages': messages_list,
+        'group_messages': group_messages,
         'task_form': task_form,
         'add_member_form': add_member_form,
         'is_creator': is_creator,
