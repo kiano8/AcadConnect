@@ -304,9 +304,19 @@ def send_message(request, pk):
     group = get_object_or_404(Group, pk=pk, members=request.user)
     content = html.escape(request.POST.get('content', '').strip())
     if content:
-        Message.objects.create(group=group, sender=request.user, content=content)
+        m = Message.objects.create(group=group, sender=request.user, content=content)
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            msg_data = {
+                'id': m.pk,
+                'sender': m.sender.username,
+                'sender_initial': m.sender.username[0].upper(),
+                'content': m.content,
+                'timestamp': m.timestamp.strftime('%I:%M %p'),
+                'is_me': True,
+            }
+            return JsonResponse({'ok': True, 'message': msg_data})
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'ok': True})
+        return JsonResponse({'ok': False})
     return redirect('collaboration:detail', pk=pk)
 
 
@@ -345,9 +355,19 @@ def send_task_message(request, pk, task_pk):
 
     content = html.escape(request.POST.get('content', '').strip())
     if content:
-        TaskMessage.objects.create(task=task, sender=request.user, content=content)
+        m = TaskMessage.objects.create(task=task, sender=request.user, content=content)
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            msg_data = {
+                'id': m.pk,
+                'sender': m.sender.username,
+                'sender_initial': m.sender.username[0].upper(),
+                'content': m.content,
+                'timestamp': m.timestamp.strftime('%I:%M %p'),
+                'is_me': True,
+            }
+            return JsonResponse({'ok': True, 'message': msg_data})
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'ok': True})
+        return JsonResponse({'ok': False})
     return redirect('collaboration:detail', pk=pk)
 
 

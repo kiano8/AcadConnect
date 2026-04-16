@@ -907,11 +907,35 @@ function sendGroupMessage(e) {
   const content = chatInput.value.trim();
   if (!content) return;
   chatInput.value = '';
+
+  const tempId = 'temp-' + Date.now();
+  appendGroupMsg({
+    id: tempId,
+    content: content,
+    sender: CURRENT_USER,
+    sender_initial: CURRENT_USER.charAt(0).toUpperCase(),
+    timestamp: 'Sending...',
+    is_me: true
+  });
+
   fetch(`/collaboration/${GROUP_PK}/message/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `content=${encodeURIComponent(content)}`
-  }).then(() => pollGroupChat());
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok && data.message) {
+      const row = chatBox.querySelector(`[data-msg-id="${tempId}"]`);
+      if (row) {
+        row.dataset.msgId = data.message.id;
+        row.querySelector('.msg-time').innerText = data.message.timestamp;
+        groupLastId = Math.max(groupLastId, data.message.id);
+      }
+    } else {
+      pollGroupChat(); // fallback if something went wrong
+    }
+  });
 }
 
 
@@ -979,11 +1003,38 @@ function sendTaskMessage(e, taskPk, groupPk) {
   const content = inp.value.trim();
   if (!content) return;
   inp.value = '';
+
+  const tempId = 'temp-' + Date.now();
+  appendTaskMsg(taskPk, {
+    id: tempId,
+    content: content,
+    sender: CURRENT_USER,
+    sender_initial: CURRENT_USER.charAt(0).toUpperCase(),
+    timestamp: 'Sending...',
+    is_me: true
+  });
+
   fetch(`/collaboration/${groupPk}/task/${taskPk}/chat/send/`, {
     method: 'POST',
     headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `content=${encodeURIComponent(content)}`
-  }).then(() => pollTaskChat(taskPk));
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok && data.message) {
+      const box = document.getElementById(`task-chat-box-${taskPk}`);
+      if (box) {
+        const row = box.querySelector(`[data-msg-id="${tempId}"]`);
+        if (row) {
+          row.dataset.msgId = data.message.id;
+          row.querySelector('.msg-time').innerText = data.message.timestamp;
+          taskLastIds[taskPk] = Math.max(taskLastIds[taskPk] || 0, data.message.id);
+        }
+      }
+    } else {
+      pollTaskChat(taskPk); // fallback
+    }
+  });
 }
 
 
