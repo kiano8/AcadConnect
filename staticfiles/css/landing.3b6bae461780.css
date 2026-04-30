@@ -1,0 +1,200 @@
+.landing-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  max-width: 800px;
+  margin: 48px auto 0;
+}
+ 
+/* REMOVE the stray "a:hover { color: var(--accent-mint); }" 
+   that was sitting here — it was overriding your card hover */
+ 
+a.feature-pill,
+a.feature-pill:visited,
+a.feature-pill:hover {
+  color: inherit;            /* stops <a> from hijacking text color */
+  text-decoration: none;
+}
+ 
+.feature-pill {
+  background: rgba(168,218,220,0.1);
+  border: 1px solid rgba(168,218,220,0.2);
+  border-radius: 12px;
+  padding: 20px 16px;
+  backdrop-filter: blur(10px);
+ 
+  /* these were missing — the real cause of the bug */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.22s cubic-bezier(.22, .68, 0, 1.2),
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.22s ease;
+}
+ 
+.feature-pill:hover {
+  transform: translateY(-6px) scale(1.03);
+  background: rgba(168,218,220,0.22);
+  border-color: rgba(168,218,220,0.5);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+}
+ 
+.feature-pill:active {
+  transform: translateY(-2px) scale(1.01);
+}
+ 
+.feature-pill-icon {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  transition: transform 0.22s cubic-bezier(.22, .68, 0, 1.2);
+}
+ 
+.feature-pill:hover .feature-pill-icon {
+  transform: scale(1.15) rotate(-4deg);
+}
+ 
+.feature-pill-text {
+  font-size: 0.8rem;
+  color: rgba(200,224,239,0.9);
+  font-weight: 500;
+  text-align: center;
+}
+ 
+.feature-pill-hint {
+  font-size: 0.68rem;
+  color: rgba(168,218,220,0.45);
+  letter-spacing: 0.06em;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+ 
+.feature-pill:hover .feature-pill-hint {
+  opacity: 1;
+}
+
+/* ---- Theme Toggle Button ---- */
+.lp-theme-toggle {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(168,218,220,0.3);
+  background: rgba(255,255,255,0.06);
+  color: rgba(200,224,239,0.8);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.lp-theme-toggle:hover {
+  background: rgba(168,218,220,0.12);
+  color: white;
+  border-color: rgba(168,218,220,0.5);
+}
+
+/* ---- Light mode overrides for landing page ---- */
+[data-theme="light"] .lp-wrap {
+  color: #1A2B3C;
+}
+
+[data-theme="light"] .lp-nav.scrolled {
+  background: rgba(240,244,248,0.92);
+  box-shadow: 0 1px 0 rgba(13,59,102,0.12);
+}
+
+[data-theme="light"] .lp-brand { color: #0D3B66; }
+[data-theme="light"] .lp-brand span { color: #2A9D8F; }
+[data-theme="light"] .lp-nav-links a { color: rgba(26,43,60,0.65); }
+[data-theme="light"] .lp-nav-links a:hover { color: #0D3B66; }
+[data-theme="light"] .lp-btn-ghost {
+  border-color: rgba(13,59,102,0.25);
+  color: #1A2B3C;
+}
+[data-theme="light"] .lp-btn-ghost:hover { background: rgba(13,59,102,0.06); }
+[data-theme="light"] .lp-hamburger span { background: #1A2B3C; }
+[data-theme="light"] .lp-mobile-menu {
+  background: rgba(240,244,248,0.98);
+  border-color: rgba(13,59,102,0.1);
+}
+[data-theme="light"] .lp-mobile-menu a { color: #4A6274; }
+
+[data-theme="light"] .lp-hero-badge {
+  background: rgba(42,157,143,0.1);
+  border-color: rgba(42,157,143,0.25);
+  color: #2A9D8F;
+}
+[data-theme="light"] .lp-hero-title { color: #0D3B66; }
+[data-theme="light"] .lp-hero-sub { color: rgba(26,43,60,0.65); }
+[data-theme="light"] .lp-hero-stats {
+  background: rgba(255,255,255,0.7);
+  border-color: rgba(13,59,102,0.12);
+}
+[data-theme="light"] .lp-stat-num { color: #2A9D8F; }
+[data-theme="light"] .lp-stat-label { color: rgba(26,43,60,0.45); }
+[data-theme="light"] .lp-stat-divider { background: rgba(13,59,102,0.1); }
+
+[data-theme="light"] .lp-section-dark {
+  background: rgba(13,59,102,0.06);
+}
+[data-theme="light"] .lp-section-alt {
+  background: rgba(42,157,143,0.05);
+}
+[data-theme="light"] .lp-section-title { color: #ffffff; }
+[data-theme="light"] .lp-section-body { color: rgba(26,43,60,0.65); }
+[data-theme="light"] .lp-section-sub { color: rgba(26,43,60,0.5); }
+[data-theme="light"] .lp-check-list li { color: rgba(26,43,60,0.75); }
+
+[data-theme="light"] .lp-visual-card {
+  background: rgba(255,255,255,0.9);
+  border-color: rgba(13,59,102,0.12);
+  box-shadow: 0 24px 64px rgba(13,59,102,0.12);
+}
+[data-theme="light"] .lp-vc-header {
+  background: rgba(13,59,102,0.04);
+  border-color: rgba(13,59,102,0.08);
+}
+[data-theme="light"] .lp-vc-task { color: #4A6274; border-color: rgba(13,59,102,0.08); }
+
+[data-theme="light"] .feature-pill {
+  background: rgba(42,157,143,0.07);
+  border-color: rgba(42,157,143,0.2);
+}
+[data-theme="light"] .feature-pill:hover {
+  background: rgba(42,157,143,0.14);
+  border-color: rgba(42,157,143,0.4);
+}
+[data-theme="light"] .feature-pill-icon { color: #2A9D8F; }
+[data-theme="light"] .feature-pill-text { color: #1A2B3C; }
+[data-theme="light"] .feature-pill-hint { color: rgba(42,157,143,0.6); }
+
+[data-theme="light"] .lp-trust-card {
+  background: rgba(255,255,255,0.8);
+  border-color: rgba(13,59,102,0.1);
+}
+[data-theme="light"] .lp-trust-card:hover { background: rgba(42,157,143,0.06); }
+[data-theme="light"] .lp-trust-card h4 { color: #0D3B66; }
+[data-theme="light"] .lp-trust-card p { color: #4A6274; }
+
+[data-theme="light"] .lp-step {
+  background: rgba(255,255,255,0.75);
+  border-color: rgba(13,59,102,0.1);
+}
+[data-theme="light"] .lp-step:hover { background: rgba(42,157,143,0.05); }
+[data-theme="light"] .lp-step h3 { color: #0D3B66; }
+[data-theme="light"] .lp-step p { color: #4A6274; }
+[data-theme="light"] .lp-step-num { color: rgba(13,59,102,0.1); }
+[data-theme="light"] .lp-step-arrow { color: rgba(13,59,102,0.2); }
+
+[data-theme="light"] .lp-cta {
+  background: linear-gradient(135deg, rgba(13,59,102,0.92) 0%, rgba(27,94,140,0.92) 50%, rgba(42,157,143,0.7) 100%);
+}
+
+[data-theme="light"] .lp-footer {
+  border-color: rgba(13,59,102,0.1);
+  color: rgba(26,43,60,0.4);
+}
