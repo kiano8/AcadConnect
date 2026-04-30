@@ -34,8 +34,8 @@ db.sqlite3
 db.sqlite3-journal
 media/
 
-# Static (collected)
-staticfiles/
+# NOTE: staticfiles/ is intentionally tracked in git so Vercel has the
+# manifest (staticfiles.json) without needing to run collectstatic at build time.
 
 # IDE
 .vscode/
